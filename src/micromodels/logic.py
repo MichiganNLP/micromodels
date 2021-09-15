@@ -1,16 +1,13 @@
 """
 Logic based classification
 """
-
-from typing import List, Mapping, Any
+from typing import Mapping, Any
 import dill
-from FeatureClassifier import FeatureClassifier
-from snorkel_queries.helpers import (
-    parallelize,
-)
+from src.micromodels.AbstractMicromodel import AbstractMicromodel
+from src.utils import run_parallel_cpu
 
 
-class LogicClassifier(FeatureClassifier):
+class LogicClassifier(AbstractMicromodel):
     """
     Logic based classification
     """
@@ -18,22 +15,21 @@ class LogicClassifier(FeatureClassifier):
     def __init__(self, name):
         self.logic = None
         self.parallelize = False
-        super(LogicClassifier, self).__init__(name)
+        super().__init__(name)
 
-    def setup(self, config):
+    def _setup(self, config):
         """
         setup stage
         """
         self.logic = config["logic_func"]
         self.parallelize = config.get("parallelize", False)
 
-    def _train(
-        self, train_data: List[str], train_args: Mapping[Any, Any] = None
+    def train(
+        self, training_data_path: str, train_args: Mapping[str, Any] = None
     ) -> None:
         """
         No need to train logical classifiers.
         """
-        pass
 
     def save_model(self, model_path):
         """
@@ -66,27 +62,26 @@ class LogicClassifier(FeatureClassifier):
         batch inference
         """
         if self.parallelize:
-            preds = parallelize(self.logic, queries)
+            preds = run_parallel_cpu(self.logic, queries)
         else:
-            preds = self.logic(queries)
-        idxs = [
-            idx for idx, pred in enumerate(preds)
-            if pred
-        ]
-        return idxs
+            preds = [self.logic(query) for query in queries]
+        return preds
+
 
 if __name__ == "__main__":
     clf = LogicClassifier("testing")
-    def foo(utt):
+
+    def _foo(utt):
+        """ Dummy logic func """
         return "depress" in utt
-    clf.setup({"logic_func": foo})
+
+    clf.setup({"logic_func": _foo, "parallelize": True})
     clf.save_model("testing_logic_clf")
 
     clf = LogicClassifier("Testing2")
     clf.load_model("testing_logic_clf")
 
-
     print(clf.infer("I am depressed"))
     print(clf.infer("I am happy"))
 
-
+    print(clf.batch_infer(["I am depressed", "I am happy"]))

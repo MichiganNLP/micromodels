@@ -3,8 +3,8 @@ Feature Extraction Pipeline
 """
 
 import json
-from factory import FEATURE_CLASSIFIER_FACTORY
-from utils import preprocess
+from src.factory import FEATURE_CLASSIFIER_FACTORY
+from src.utils import preprocess
 
 
 class FeatureExtractionPipeline:
@@ -45,10 +45,10 @@ class FeatureExtractionPipeline:
 
         try:
             output_features = [entry["feature_name"] for entry in config]
-        except KeyError:
+        except KeyError as ex:
             raise ValueError(
                 "Invalid config, 'feature_name' missing for an entry."
-            )
+            ) from ex
 
         if len(list(set(output_features))) != len(config):
             raise ValueError("Invalid config, redundant 'feature_name' found.")
@@ -62,7 +62,9 @@ class FeatureExtractionPipeline:
             if not model_type:
                 raise ValueError("Invalid config, must specify model_type.")
 
-            model = FEATURE_CLASSIFIER_FACTORY.get(entry["model_type"])()
+            model = FEATURE_CLASSIFIER_FACTORY.get(entry["model_type"])(
+                feature_name
+            )
 
             if not model:
                 raise ValueError(

@@ -4,28 +4,44 @@ SVM Feature classifier
 
 import pickle
 import random
+import json
 from nltk.classify import SklearnClassifier
 from sklearn.svm import SVC
-from FeatureClassifier import FeatureClassifier
-from utils import preprocess_list
+from src.micromodels.AbstractMicromodel import AbstractMicromodel
+from src.utils import preprocess_list
 
 random.seed(a=42)
 
 
-class SVM(FeatureClassifier):
+class SVM(AbstractMicromodel):
     """
     SVM implementation of Feature Classifier
     """
 
     def __init__(self, name):
-        super(SVM, self).__init__(name)
+        super().__init__(name)
         self.trainable = True
         self.svm_model = None
 
-    def _train(self, train_data, train_args):
+    def _setup(self, config):
+        """
+        Setup stage - nothing to do for svm.
+        """
+
+    def train(self, training_data_path, train_args=None):
+        """
+        Train SVM.
+        """
+        with open(training_data_path, "r") as file_p:
+            train_data = json.load(file_p)
+
+        train_args = train_args or {}
+        return self._train(train_data, train_args)
+
+    def _train(self, train_data, _train_args=None):
         """
         Train model
-        :param train_data: dict of labels: [utterances]
+        :param train_data: dict of labels [utterances]
         """
         positives = train_data["true"]
         negatives = train_data["false"]
@@ -33,9 +49,7 @@ class SVM(FeatureClassifier):
             raise ValueError("Invalid training data")
 
         if len(negatives) > len(positives) * 2:
-            train_data["false"] = random.sample(
-                negatives, len(positives) * 2
-            )
+            train_data["false"] = random.sample(negatives, len(positives) * 2)
 
         preprocessed = {label: [] for label in train_data.keys()}
         for label, utterances in train_data.items():
@@ -48,7 +62,6 @@ class SVM(FeatureClassifier):
                 formatted.append((words, label))
 
         self.svm_model = SklearnClassifier(SVC(kernel="linear"))
-        print("Start training")
         self.svm_model.train(formatted)
         return self.svm_model
 
@@ -78,14 +91,7 @@ class SVM(FeatureClassifier):
 
         tokens = {token: True for token in query.strip().split()}
         pred = self.svm_model.classify(tokens)
-        #return {"true": True, "false": False}[pred]
-        return pred
-
-    def test(self, testing_dataset):
-        """
-        Test classifier
-        """
-        return None
+        return {"true": True, "false": False}[pred]
 
     def is_loaded(self):
         """
@@ -96,16 +102,11 @@ class SVM(FeatureClassifier):
 
 if __name__ == "__main__":
     test = SVM("testing")
-    #data = "/home/andrew/cbt_dialogue_system/featurizer/data/diagnosed.json"
-    #test.train(data)
-    #print(test.infer("I was diagnosed with depression"))
-    #print(test.infer("I have been diagnosed with depression."))
-    #print(test.infer("@ writing has always helped me deal with emotional stuff. i used to free write a lot when i was diagnosed with depression."))
-    #test.save_model("testing")
     from datetime import datetime
-    model_path = "/home/andrew/cbt_dialogue_system/featurizer/models/diagnosed_svm"
+
+    _model_path = "/home/andrew/micromodels/models/diagnosed_svm"
     start = datetime.now()
-    test.load_model(model_path)
+    test.load_model(_model_path)
     end = datetime.now()
     print("Loading took", end - start)
     start = datetime.now()
@@ -113,4 +114,3 @@ if __name__ == "__main__":
     end = datetime.now()
     print("Inference took", end - start)
     print(test.infer("I have been diagnosed with depression."))
-    print(test.infer("@ writing has always helped me deal with emotional stuff. i used to free write a lot when i was diagnosed with depression."))
