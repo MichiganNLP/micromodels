@@ -25,7 +25,7 @@ class LogicClassifier(AbstractMicromodel):
         self.parallelize = config.get("parallelize", False)
 
     def train(
-        self, training_data_path: str, train_args: Mapping[str, Any] = None
+        self, training_data_path: str, **kwargs
     ) -> None:
         """
         No need to train logical classifiers.

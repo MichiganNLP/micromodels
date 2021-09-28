@@ -51,12 +51,12 @@ class TestOrchestrator(unittest.TestCase):
             {
                 "model_type": "svm",
                 "data": os.path.join(self.data_path, "gender.json"),
-                "feature_name": "gender",
+                "name": "gender",
                 "model_path": os.path.join(self.model_path, "gender_svm"),
             },
             {
                 "model_type": "logic",
-                "feature_name": "depression",
+                "name": "depression",
                 "model_path": os.path.join(self.model_path, "depression_logic"),
                 "setup_args": {"logic_func": _logic},
             },
@@ -69,7 +69,7 @@ class TestOrchestrator(unittest.TestCase):
         """
         self.orchestrator.train_all()
         micromodel_names = [
-            "%s_%s" % (config["feature_name"], config["model_type"])
+            "%s_%s" % (config["name"], config["model_type"])
             for config in self.configs
         ]
 

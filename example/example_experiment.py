@@ -25,20 +25,15 @@ def example_experiment():
     clf = IMDbClassifier(mm_base_path)
 
     configs = [
-        # {
-        #    "model_type": "svm",
-        #    "feature_name": "extreme_description",
-        #    "data": "/home/andrew/micromodels/example/dummy.json",
-        # },
         {
             "model_type": "logic",
-            "feature_name": "good",
+            "name": "good",
             "setup_args": {"logic_func": _positive_keyword_lookup},
             "model_path": "/home/andrew/micromodels/models/good_logic",
         },
         {
             "model_type": "logic",
-            "feature_name": "good2",
+            "name": "good2",
             "setup_args": {"logic_func": _positive_keyword_lookup},
             "model_path": "/home/andrew/micromodels/models/good_logic",
         },

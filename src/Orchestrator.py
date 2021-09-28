@@ -19,11 +19,11 @@ def get_model_name(config: Mapping[str, Any]) -> str:
     :return: name of micromodel
     :raise ValueError: raised when configuration is invalid
     """
-    if "feature_name" not in config:
-        raise ValueError("Missing %s in config." % "feature_name")
+    if "name" not in config:
+        raise ValueError("Missing %s in config." % "name")
     if "model_type" not in config:
         raise ValueError("Missing %s in config." % "model_type")
-    return "%s_%s" % (config["feature_name"], config["model_type"])
+    return "%s_%s" % (config["name"], config["model_type"])
 
 
 class Orchestrator:
@@ -66,10 +66,10 @@ class Orchestrator:
         """
         for config in configs:
             self._verify_config(config)
-        feature_names = [get_model_name(config) for config in configs]
-        if len(list(set(feature_names))) != len(configs):
+        names = [get_model_name(config) for config in configs]
+        if len(list(set(names))) != len(configs):
             raise ValueError(
-                "Number of feature names does not match the number of config \
+                "Number of names does not match the number of config \
                 entries. Are there duplicate feature names?"
             )
 
@@ -82,7 +82,7 @@ class Orchestrator:
         :return: None
         :raises ValueError: raised when configuration is invalid
         """
-        required_fields = ["feature_name", "model_type"]
+        required_fields = ["name", "model_type"]
         for field in required_fields:
             if field not in config:
                 raise ValueError("Invalid config: %s missing" % field)

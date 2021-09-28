@@ -1,5 +1,5 @@
 """
-SVM Feature classifier
+SVM Micromodel.
 """
 
 import pickle
@@ -15,12 +15,11 @@ random.seed(a=42)
 
 class SVM(AbstractMicromodel):
     """
-    SVM implementation of Feature Classifier
+    SVM implementation of a micromodel.
     """
 
     def __init__(self, name):
         super().__init__(name)
-        self.trainable = True
         self.svm_model = None
 
     def _setup(self, config):
@@ -28,15 +27,14 @@ class SVM(AbstractMicromodel):
         Setup stage - nothing to do for svm.
         """
 
-    def train(self, training_data_path, train_args=None):
+    def train(self, training_data_path, **kwargs) -> None:
         """
         Train SVM.
         """
         with open(training_data_path, "r") as file_p:
             train_data = json.load(file_p)
 
-        train_args = train_args or {}
-        return self._train(train_data, train_args)
+        return self._train(train_data, kwargs)
 
     def _train(self, train_data, _train_args=None):
         """
