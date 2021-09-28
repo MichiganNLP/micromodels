@@ -4,7 +4,7 @@ An Orchestrator is responsible for training, loading,
 and running inference of multiple micromodels.
 """
 
-from typing import List, Mapping, Any
+from typing import List, Mapping, Any, Optional
 
 import os
 import json
@@ -19,7 +19,7 @@ def get_model_name(config: Mapping[str, Any]) -> str:
     """
     Get name of a micromodel based on its config.
 
-    :param config: a micromodel configuration
+    :param config: a micromodel configuration.
     :return: name of micromodel
     :raise ValueError: raised when configuration is invalid
     """
@@ -36,7 +36,9 @@ class Orchestrator:
     from multiple micromodels.
     """
 
-    def __init__(self, base_path: str, configs: List[Mapping[str, Any]] = None):
+    def __init__(
+        self, base_path: str, configs: Optional[List[Mapping[str, Any]]] = None
+    ):
         """
         :param base_path: filesystem path to where micromodels will be stored.
         :param configs: list of micromodel configurations.
@@ -172,7 +174,9 @@ class Orchestrator:
         for config in self.configs:
             self.load_model(config)
 
-    def load_model(self, config: Mapping[str, Any], force_reload: bool = False):
+    def load_model(
+        self, config: Mapping[str, Any], force_reload: bool = False
+    ):
         """
         Load model based on config
         """
