@@ -7,10 +7,6 @@ and running inference of multiple micromodels.
 from typing import List, Mapping, Any, Optional
 
 import os
-import json
-import sys
-import time
-from pathos.multiprocessing import ProcessingPool as Pool
 from src.factory import FEATURE_CLASSIFIER_FACTORY
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
 
@@ -45,20 +41,9 @@ class Orchestrator:
         """
         self.pipeline = []
         self.cache = {}
-        self.model_basepath = os.path.join(base_path, "models")
+        self.model_basepath = base_path
         if configs is not None:
             self.set_configs(configs)
-
-    def set_configs_from_file(self, config_file: str) -> None:
-        """
-        Load and set Orchestrator's configuration based on input file.
-
-        :param config_file: filepath to configuration file
-        :returns: None
-        """
-        with open(config_file, "r") as file_p:
-            configs = json.load(file_p)
-        self.set_configs(configs)
 
     def set_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """
@@ -69,21 +54,6 @@ class Orchestrator:
         """
         self._verify_configs(configs)
         self.configs = configs
-
-    def set_model_basepath(self, path: str) -> None:
-        """
-        Set model_basepath attribute.
-
-        :param path: filepath to directory storing all micromodels.
-        :return: None
-        """
-        self.model_basepath = path
-
-    def flush_cache(self):
-        """
-        Flush cache
-        """
-        self.cache = {}
 
     def _verify_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """
@@ -124,11 +94,10 @@ class Orchestrator:
         Fetch micromodel as specified in the input config.
         If the micromodel has not been trained yet, this method will
         train the model, add it to the cache, and return the model.
-        :force_train: allows users to always retrain a micromodel.
 
-        :param config: a micromodel configuration
-        :param force_train: flag for forcing a retrain
-        :return: AbstractMicromodel
+        :param config: a micromodel configuration.
+        :param force_train: flag for forcing a retrain.
+        :return: Instance of a micromodel.
         :raise KeyError: raised when an invalid model type is specified.
         """
         self._verify_config(config)
@@ -172,13 +141,16 @@ class Orchestrator:
         Load all models into cache.
         """
         for config in self.configs:
-            self.load_model(config)
+            self._load_model(config)
 
-    def load_model(
+    def _load_model(
         self, config: Mapping[str, Any], force_reload: bool = False
     ):
         """
         Load model based on config
+
+        :param config: Micromodel configuration.
+        :param force_reload: flag for forcing a reload.
         """
         self._verify_config(config)
         model_name = get_model_name(config)
@@ -198,96 +170,40 @@ class Orchestrator:
         self.cache[model_name] = model
         return self.cache[model_name]
 
-    def infer_config(self, query, config):
+    def infer_config(
+        self, query: str, config: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
         """
         Run inference from the micromodel specified in a config.
+
+        :param query: string utterance to run inference on.
+        :param config: Micromodel configuration.
+        :return: Mapping of micromodel name to the inference result.
         """
         self._verify_config(config)
         model_name = get_model_name(config)
         model = self.cache.get(model_name)
         if not model:
-            model = self.load_model(config)
+            model = self._load_model(config)
         return {model_name: model.infer(query, do_preprocess=True)}
 
-    def infer_all(self, query):
+    def infer(self, query: str) -> Mapping[str, Any]:
         """
         Infer from all the models in self.configs
+
+        :param query: string utterance to run interence on.
+        :return: Mapping of micromodel names to inference results.
         """
         features = {}
         for config in self.configs:
             features.update(self.infer_config(query, config))
         return features
 
-    def infer(self, query):
+    def flush_cache(self) -> None:
         """
-        wrapper around infer_all
+        Flush cache of micromodels.
         """
-        return self.infer_all(query)
-
-    def batch_infer_config(self, config, queries):
-        """
-        Batch inference if applicable
-        """
-        self._verify_config(config)
-        model_name = get_model_name(config)
-        model = self.cache.get(model_name)
-        if not model:
-            model = self.load_model(config)
-        if not hasattr(model, "batch_infer"):
-            raise RuntimeError(
-                "model %s does not have batch_infer" % model_name
-            )
-        return {model_name: model.batch_infer(queries)}
-
-    def infer_aggregate(self, queries: List[str]) -> Mapping[str, int]:
-        """
-        Given a list of queries, run inference on each one and
-        aggregate the results.
-        """
-        aggregate = {}
-        for query in queries:
-            predictions = self.infer(query)
-            for feature_name, result in predictions.items():
-                if feature_name not in aggregate:
-                    aggregate[feature_name] = 0
-                if result == "true":
-                    aggregate[feature_name] += 1
-        return aggregate
-
-    def infer_aggregate_parallel(
-        self, queries: List[str], num_proc: int
-    ) -> Mapping[str, int]:
-        """
-        Given a list of queries, run inference on each one and
-        aggregate the results.
-        Run in parallel.
-        """
-        if num_proc < 2:
-            return self.infer_aggregate(queries)
-
-        chunk_size = len(queries) // num_proc
-        chunks = [
-            queries[i : i + chunk_size]
-            for i in range(0, len(queries), chunk_size)
-        ]
-        pool = Pool(num_proc)
-        try:
-            results = pool.amap(self.infer_aggregate, chunks)
-            while not results.ready():
-                time.sleep(1)
-            infer_results = results.get()
-        except (KeyboardInterrupt, SystemExit):
-            print("Inference Canceled")
-            pool.terminate()
-            sys.exit(1)
-
-        aggregate = {}
-        for infer_result in infer_results:
-            for feature_name, feature_count in infer_result.items():
-                if feature_name not in aggregate:
-                    aggregate[feature_name] = 0
-                aggregate[feature_name] += feature_count
-        return aggregate
+        self.cache = {}
 
     @property
     def num_micromodels(self):
