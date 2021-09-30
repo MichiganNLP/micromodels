@@ -3,5 +3,5 @@ Task-Specific Classifier
 
 TaskClassifier
 --------------
-.. automodule:: TaskClassifier
+.. automodule:: src.TaskClassifier
     :members:

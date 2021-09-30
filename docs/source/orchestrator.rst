@@ -1,5 +1,5 @@
 Orchestrator
 ============
 
-.. automodule:: Orchestrator
+.. automodule:: src.Orchestrator
     :members:

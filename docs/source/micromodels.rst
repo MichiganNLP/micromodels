@@ -4,25 +4,23 @@ Micromodels
 
 AbstractMicromodel
 ------------------
-.. automodule:: micromodels.AbstractMicromodel
+.. automodule:: src.micromodels.AbstractMicromodel
     :members:
-
 
 
 SVM Micromodel
 ------------------
-.. automodule:: micromodels.svm
+.. automodule:: src.micromodels.svm
     :members:
-    :private-members:
 
 
 Logic Micromodel
 ----------------
-.. automodule:: micromodels.logic
+.. automodule:: src.micromodels.logic
    :members:
 
 
 Bert-Query Micromodel
 ---------------------
-.. automodule:: micromodels.bert_query
+.. automodule:: src.micromodels.bert_query
     :members:

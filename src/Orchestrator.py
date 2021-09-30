@@ -7,8 +7,8 @@ and running inference of multiple micromodels.
 from typing import List, Mapping, Any, Optional
 
 import os
-from src.factory import FEATURE_CLASSIFIER_FACTORY
-from src.micromodels.AbstractMicromodel import AbstractMicromodel
+from factory import MICROMODEL_FACTORY
+from micromodels.AbstractMicromodel import AbstractMicromodel
 
 
 def get_model_name(config: Mapping[str, Any]) -> str:
@@ -107,7 +107,7 @@ class Orchestrator:
         model_name = get_model_name(config)
 
         try:
-            model = FEATURE_CLASSIFIER_FACTORY[model_type](model_name)
+            model = MICROMODEL_FACTORY[model_type](model_name)
         except KeyError as ex:
             raise KeyError("Invalid model type %s" % model_type) from ex
 
@@ -119,7 +119,7 @@ class Orchestrator:
             setup_config["name"] = model_name
         model.setup(setup_config)
         print("Training %s" % model_name)
-        model.train(train_data, args)
+        model.train(train_data, kwargs=args)
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )
@@ -161,7 +161,7 @@ class Orchestrator:
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )
-        model = FEATURE_CLASSIFIER_FACTORY[config["model_type"]](model_name)
+        model = MICROMODEL_FACTORY[config["model_type"]](model_name)
         setup_config = config.get("setup_args", {})
         if "name" not in setup_config:
             setup_config["name"] = model_name

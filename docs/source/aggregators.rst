@@ -3,10 +3,10 @@ Aggregators
 
 AbstractAggregator
 ------------------
-.. automodule:: aggregators.AbstractAggregator
+.. automodule:: src.aggregators.AbstractAggregator
     :members:
 
 SimpleRatioAggregator
 ---------------------
-.. automodule:: aggregators.SimpleRatioAggregator
+.. automodule:: src.aggregators.SimpleRatioAggregator
     :members:
