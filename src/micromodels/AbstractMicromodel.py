@@ -1,5 +1,5 @@
 """
-Feature Classifier Abstract Class
+Micromodel Abstract Class
 """
 from typing import Mapping, Any, Optional
 
