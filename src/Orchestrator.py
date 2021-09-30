@@ -7,8 +7,8 @@ and running inference of multiple micromodels.
 from typing import List, Mapping, Any, Optional
 
 import os
-from factory import MICROMODEL_FACTORY
-from micromodels.AbstractMicromodel import AbstractMicromodel
+from src.factory import MICROMODEL_FACTORY
+from src.micromodels.AbstractMicromodel import AbstractMicromodel
 
 
 def get_model_name(config: Mapping[str, Any]) -> str:
