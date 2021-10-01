@@ -103,7 +103,6 @@ class Orchestrator:
         self._verify_config(config)
         model_type = config.get("model_type")
         train_data = config.get("data")
-        args = config.get("args", {})
         model_name = get_model_name(config)
 
         try:
@@ -119,7 +118,7 @@ class Orchestrator:
             setup_config["name"] = model_name
         model.setup(setup_config)
         print("Training %s" % model_name)
-        model.train(train_data, kwargs=args)
+        model.train(train_data)
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )

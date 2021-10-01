@@ -18,15 +18,19 @@ class AbstractMicromodel:
         """
         Set up any necessary configurations per micromodel.
         The following properties are required for every micromodel:
-        * name: Given name of the micromodel.
-        * model_type: Type of algorithm used for the micromodel. (Ex: svm)
 
-        For micromodel specific properties, refer to their respective
-        documentation.
+        - name: Given name of the micromodel.
+        - model_type: Type of algorithm used for the micromodel. (Ex: svm)
+        - model_path: Filepath for saving or loading micromodel.
+        - (Optional) data: Filepath to training data, if any. Note that
+          not all micromodels need training data (Ex: logic micromodels).
+        - (Optional) setup_args: Dictionary of micromodel specific parameters.
+          For micromodel specific parameters, refer to their respective
+          documentation.
 
         :param config: micromodel configuration.
         """
-        return self._setup(config)
+        raise NotImplementedError("setup() not implemented.")
 
     def _setup(self, config: Mapping[str, Any]) -> None:
         """
@@ -34,16 +38,14 @@ class AbstractMicromodel:
 
         :param config: micromodel configuration.
         """
-        raise NotImplementedError("_setup() not implemented.")
 
-    def train(self, training_data_path: str, **kwargs: Any) -> None:
+    def train(self, training_data_path: str) -> None:
         """
         Train a micromodel.
 
         :param training_data_path: filepath to training data.
             Note that the format of the training data depends on how
             the inner _train() method for each micromodel.
-        :param kwargs: micromodel specific training parameters.
         """
         raise NotImplementedError("train() not implemented.")
 

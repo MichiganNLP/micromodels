@@ -1,7 +1,6 @@
 """
 SVM Micromodel.
 """
-# pylint: disable=abstract-method
 from typing import Mapping, Any, List
 
 import pickle
@@ -26,17 +25,13 @@ class SVM(AbstractMicromodel):
 
     def setup(self, config: Mapping[str, Any]) -> None:
         """
-        The following properties are required for a SVM micromodel:
-        * name: Given name of the micromodel.
-        * model_type: Type of algorithm used for the micromodel. (Ex: svm)
-        * data: Filepath to where the training data for the SVM model is stored.
-        * model_path: Filepath to where to save or load SVM model.
+        SVM micromodels do not currently support any parameters. No-op method.
 
         :param config: micromodel configuration.
         """
         return
 
-    def train(self, training_data_path: str, **kwargs) -> SklearnClassifier:
+    def train(self, training_data_path: str) -> SklearnClassifier:
         """
         Train a SVM micromodel.
 
@@ -44,12 +39,9 @@ class SVM(AbstractMicromodel):
         """
         with open(training_data_path, "r") as file_p:
             train_data = json.load(file_p)
+        self._train(train_data)
 
-        return self._train(train_data, **kwargs)
-
-    def _train(
-        self, train_data: Mapping[str, List[str]], **kwargs
-    ) -> SklearnClassifier:
+    def _train(self, train_data: Mapping[str, List[str]]) -> None:
         """
         Inner train method.
 
@@ -86,11 +78,10 @@ class SVM(AbstractMicromodel):
 
         self.svm_model = SklearnClassifier(SVC(kernel="linear"))
         self.svm_model.train(formatted)
-        return self.svm_model
 
     def save_model(self, model_path: str) -> None:
         """
-        Dump SVM model to file.
+        Dumps SVM model to file, using pickle.
 
         :param model_path: Filepath to save SVM model.
         """
@@ -102,7 +93,8 @@ class SVM(AbstractMicromodel):
 
     def load_model(self, model_path: str) -> None:
         """
-        Load model, sets self.svm_model.
+        Loads SVM model, and sets self.svm_model.
+        Expects a pickled file.
 
         :param model_path: Filepath for loading SVM model.
         """
@@ -111,7 +103,7 @@ class SVM(AbstractMicromodel):
 
     def _infer(self, query: str) -> bool:
         """
-        Infer model.
+        Innfer infer method. Calls self.svm_model.classify().
 
         :param query: Utterance to classify.
         :return: Inference result, either True or False.

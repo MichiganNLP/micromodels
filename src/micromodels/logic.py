@@ -1,7 +1,8 @@
 """
-Logic based classification
+Logic Micromodel.
 """
-from typing import Mapping, Any
+from typing import Mapping, Any, List
+
 import dill
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
 from src.utils import run_parallel_cpu
@@ -9,79 +10,76 @@ from src.utils import run_parallel_cpu
 
 class LogicClassifier(AbstractMicromodel):
     """
-    Logic based classification
+    Logic-based classifier
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.logic = None
         self.parallelize = False
         super().__init__(name)
 
-    def _setup(self, config):
+    def setup(self, config: Mapping[str, Any]) -> None:
         """
-        setup stage
+        The following properties are required for a logic micromodel:
+
+        - logic_func: Callable function with the actual logic implementation.
+        - (Optional) parallelize: Boolean value for applying the current
+          micromodel on the input data in parallel.
         """
         self.logic = config["logic_func"]
         self.parallelize = config.get("parallelize", False)
 
-    def train(
-        self, training_data_path: str, **kwargs
-    ) -> None:
+    def train(self, training_data_path: str) -> None:
         """
-        No need to train logical classifiers.
-        """
+        No need to train logical classifiers. No-op method.
 
-    def save_model(self, model_path):
+        :param training_data_path: Filepath to training data.
         """
-        Save model
+        return
+
+    def save_model(self, model_path: str) -> None:
+        """
+        Save model to file system. Uses dill to dump inner Callable function.
+
+        :param model_path: Filepath to store model.
         """
         with open(model_path, "wb") as file_p:
             dill.dump(self.logic, file_p)
 
-    def load_model(self, model_path):
+    def load_model(self, model_path: str) -> None:
         """
-        Load model
+        Load model. Sets self.logic with a Callable instance.
+
+        :param model_path: Filepath to load logic.
         """
         with open(model_path, "rb") as file_p:
             self.logic = dill.load(file_p)
 
-    def _infer(self, query):
+    def _infer(self, query: str) -> bool:
         """
-        infer
+        Inner infer method. Calls self.logic method.
+
+        :param query: String utterance to query.
+        :return: Boolean result.
         """
         return self.logic(query)
 
-    def is_loaded(self):
+    def is_loaded(self) -> bool:
         """
-        Check if snorket_query is set.
+        Check if self.logic is set.
+        :return: True if self.logic is set.
         """
         return self.logic is not None
 
-    def batch_infer(self, queries):
+    def batch_infer(self, queries: List[str]) -> List[bool]:
         """
-        batch inference
+        Batch inference method.
+
+        :param queries: List of query utterances.
+        :return: List of classification results.
         """
         if self.parallelize:
             preds = run_parallel_cpu(self.logic, queries)
         else:
             preds = [self.logic(query) for query in queries]
         return preds
-
-
-if __name__ == "__main__":
-    clf = LogicClassifier("testing")
-
-    def _foo(utt):
-        """ Dummy logic func """
-        return "depress" in utt
-
-    clf.setup({"logic_func": _foo, "parallelize": True})
-    clf.save_model("testing_logic_clf")
-
-    clf = LogicClassifier("Testing2")
-    clf.load_model("testing_logic_clf")
-
-    print(clf.infer("I am depressed"))
-    print(clf.infer("I am happy"))
-
-    print(clf.batch_infer(["I am depressed", "I am happy"]))
