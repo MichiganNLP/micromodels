@@ -3,6 +3,7 @@ Unittests for orchestrator
 """
 
 import os
+import shutil
 import unittest
 from src.Orchestrator import Orchestrator
 
@@ -14,7 +15,6 @@ class TestOrchestrator(unittest.TestCase):
     """
     Testcases for Orchestrator
     """
-
     def setUp(self):
         self.base_path = os.path.join(MM_BASE_PATH, "tests")
         self.data_path = os.path.join(self.base_path, "test_data")
@@ -29,52 +29,107 @@ class TestOrchestrator(unittest.TestCase):
         Remove any models trained from training
         """
         micromodel_files = [config["model_path"] for config in self.configs]
-        for filepath in micromodel_files:
-            if os.path.isfile(filepath):
-                print("Deleting %s" % filepath)
-                os.remove(filepath)
+        for _path in micromodel_files:
+            if os.path.isfile(_path):
+                print("Deleting %s" % _path)
+                os.remove(_path)
+            if os.path.isdir(_path):
+                print("Deleting %s" % _path)
+                shutil.rmtree(_path)
 
     def initialize_config(self):
         """
         Initialize configuration for Orchestrator.
         The configurations should include every type of micromodel.
-        TODO: Add test for snorkel.
         """
-
         def _logic(utterance: str) -> bool:
             """
             Logic to be used by the logic-micromodel.
             """
-            return "depress" in utterance.lower()
+            return "test" in utterance.lower()
 
         configs = [
             {
                 "model_type": "svm",
                 "data": os.path.join(self.data_path, "gender.json"),
-                "name": "gender",
-                "model_path": os.path.join(self.model_path, "gender_svm"),
+                "name": "test_svm",
+                "model_path": os.path.join(self.model_path, "test_svm"),
             },
             {
                 "model_type": "logic",
-                "name": "depression",
-                "model_path": os.path.join(self.model_path, "depression_logic"),
+                "name": "test_logic",
+                "model_path": os.path.join(self.model_path, "test_logic"),
                 "setup_args": {"logic_func": _logic},
             },
+            {
+                "model_type": "bert_query",
+                "name": "test_bert_query",
+                "model_path": os.path.join(self.model_path, "test_bert_query"),
+                "setup_args": {
+                    "threshold": 0.8,
+                    "seed": [
+                        "This is a test",
+                        "Arya is a hungry cat.",
+                    ],
+                    "infer_config": {
+                        "k": 2,
+                        "segment_config": {
+                            "window_size": 5,
+                            "step_size": 3
+                        }
+                    }
+                }
+            }
         ]
         return configs
+
+
+    @property
+    def micromodel_names(self):
+        """
+        Get names of micromodels according to self.configs
+        """
+        return [
+            "%s_%s" % (config["name"], config["model_type"])
+            for config in self.configs
+        ]
 
     def test_train_all(self):
         """
         Test training all configurations
         """
         self.orchestrator.train_all()
-        micromodel_names = [
-            "%s_%s" % (config["name"], config["model_type"])
-            for config in self.configs
-        ]
-
-        for micromodel_name in micromodel_names:
+        for micromodel_name in self.micromodel_names:
             self.assertIn(micromodel_name, self.orchestrator.cache)
+
+    def test_load_models(self):
+        """
+        Test loading of models.
+        """
+        self.orchestrator.train_all()
+        self.orchestrator.flush_cache()
+        self.orchestrator.load_models()
+        for micromodel_name in self.micromodel_names:
+            self.assertIn(micromodel_name, self.orchestrator.cache)
+
+    def test_inference(self):
+        """
+        Test infering all micromodels.
+        """
+        self.orchestrator.train_all()
+        inference = self.orchestrator.infer("I am a boy.")
+        for micromodel in self.micromodel_names:
+            self.assertIsInstance(inference[micromodel], bool)
+            if micromodel.endswith("svm"):
+                self.assertEqual(inference[micromodel], True)
+
+        inference = self.orchestrator.infer("This is a test.")
+        for micromodel in self.micromodel_names:
+            self.assertIsInstance(inference[micromodel], bool)
+            if micromodel.endswith("logic") or \
+               micromodel.endswith("bert_query"):
+                self.assertEqual(inference[micromodel], True)
+
 
 
 if __name__ == "__main__":

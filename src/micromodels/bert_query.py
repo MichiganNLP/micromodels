@@ -141,7 +141,7 @@ def _batch_similarity_search(
     for idx, result_obj in results.items():
         top_idx = 0
         if len(result_obj) > 1:
-            top_idx = np.argmax([entry["score"] for entry in result_obj])
+            top_idx = np.argmax([entry["max_score"] for entry in result_obj])
         top_entry = result_obj[top_idx]
         top_entry["query"] = orig_queries[idx]
         results[idx] = top_entry
@@ -246,7 +246,6 @@ class BertQuery(AbstractMicromodel):
             json.dump({"seed": self.seed}, file_p, indent=2)
 
         encoding_path = os.path.join(model_path, "seed_encodings.npy")
-        self.seed_encoding = self.seed_encoding.cpu()
         np.save(encoding_path, self.seed_encoding)
 
     def load_model(self, model_path: str) -> None:
