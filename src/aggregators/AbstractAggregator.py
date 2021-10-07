@@ -1,5 +1,5 @@
 """
-Abstract Aggregator
+Abstract Aggregator class.
 """
 
 

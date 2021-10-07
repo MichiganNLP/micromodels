@@ -32,13 +32,6 @@ class AbstractMicromodel:
         """
         raise NotImplementedError("setup() not implemented.")
 
-    def _setup(self, config: Mapping[str, Any]) -> None:
-        """
-        Inner setup method.
-
-        :param config: micromodel configuration.
-        """
-
     def train(self, training_data_path: str) -> None:
         """
         Train a micromodel.
@@ -63,12 +56,12 @@ class AbstractMicromodel:
             query = preprocess(query)
         return self._infer(query)
 
-    def _infer(self, query: str) -> Mapping[str, Any]:
+    def _infer(self, query: str) -> bool:
         """
         Inner infer function.
 
         :param query: string utterance to query.
-        :return: Mapping of micromodel name to inference results.
+        :return: Inference results.
         """
         raise NotImplementedError("_infer() not implemented.")
 
