@@ -20,7 +20,6 @@ from collections import defaultdict
 import numpy as np
 from pathos.multiprocessing import ProcessingPool as Pool
 from interpret.glassbox import ExplainableBoostingClassifier
-
 from src.Orchestrator import Orchestrator, get_model_name
 from src.aggregators.SimpleRatioAggregator import SimpleRatioAggregator
 from src.metrics import recall, precision, f1
@@ -108,7 +107,7 @@ class TaskClassifier:
         Load all micromodels, while training those that need training.
         """
         self.orchestrator.train_all()
-        self.orchestrator.load_models()
+        self.orchestrator.load_models(force_reload=True)
 
     def featurize_data(
         self, data: List[Tuple[List[str], Any]]
@@ -153,8 +152,6 @@ class TaskClassifier:
         self,
         config: Mapping[str, Any],
         utterances: List[List[str]],
-        pool_size: int = 5,
-        chunk_size: int = 10,
     ) -> Mapping[int, List[int]]:
         """
         Run a single micromodel that's specified in config.
@@ -162,56 +159,21 @@ class TaskClassifier:
 
         :param config: micromodel specs.
         :param utterances: list of utterance groups.
-        :param pool_size: number of processes to use to process input data.
-        :param chunk_size: number of sentences to process at a time.
 
-        :return: mapping of utterance group indices to a list of indices that
-            correspond to matches.
+        :return: List of binary vectors, which is represented as a list of
+            indices that correspond to a hit.
         """
+        model_type = config.get("model_type")
+        if not model_type:
+            raise RuntimeError("model_type not found in config.")
+        model_name = get_model_name(config)
+        if not model_name:
+            raise RuntimeError("name not found in config.")
 
-        def amap_infer(
-            utterances: List[Tuple[int, List[str]]]
-        ) -> List[Tuple[int, int]]:
-            """
-            inference for parallelizing.
-            :utterances: List[Tuple(idx, List(query))]
-            """
-            results = []
-            model_name = get_model_name(config)
-            for query_obj in utterances:
-                idx = query_obj[0]
-                sentences = query_obj[1]
-
-                for sentence_idx, sentence in enumerate(sentences):
-                    pred = self.orchestrator.infer_config(sentence, config)
-                    if pred[model_name]:
-                        results.append((idx, sentence_idx))
-            return results
-
-        # Add utterance indexes
-        utterances = list(enumerate(utterances))
-        chunks = [
-            utterances[i : i + chunk_size]
-            for i in range(0, len(utterances), chunk_size)
-        ]
-        with Pool(pool_size) as pool:
-            try:
-                results = pool.amap(amap_infer, chunks)
-                while not results.ready():
-                    time.sleep(1)
-                infer_results = results.get()
-            except (KeyboardInterrupt, SystemExit):
-                pool.terminate()
-                sys.exit(1)
-
-        result_idxs = defaultdict(list)
-        for results in infer_results:
-            for idx_pairs in results:
-                utterance_idx = idx_pairs[0]
-                sentence_idx = idx_pairs[1]
-                result_idxs[utterance_idx].append(sentence_idx)
-
-        return result_idxs
+        binary_vectors = self.orchestrator.batch_infer_config(
+            utterances, config
+        )
+        return binary_vectors[model_name]
 
     def run_micromodels(
         self, utterances: List[List[str]]
@@ -320,7 +282,9 @@ class TaskClassifier:
         featurized, _ = self.featurize_data(formatted)
         return self.infer_featurized(featurized)
 
-    def infer_featurized(self, feature_vector: np.ndarray) -> Tuple[Any, float]:
+    def infer_featurized(
+        self, feature_vector: np.ndarray
+    ) -> Tuple[Any, float]:
         """
         Infer on a single featurized vector.
 
@@ -365,23 +329,8 @@ class TaskClassifier:
 
         accuracy = num_correct / len(groundtruth)
         return {
-            "precision": precision(
-                predictions,
-                groundtruth,
-                pos_val=self.positive_value,
-                neg_val=self.negative_value,
-            ),
-            "recall": recall(
-                predictions,
-                groundtruth,
-                pos_val=self.positive_value,
-                neg_val=self.negative_value,
-            ),
             "f1": f1(
                 predictions,
                 groundtruth,
-                pos_val=self.positive_value,
-                neg_val=self.negative_value,
             ),
-            "accuracy": accuracy,
         }

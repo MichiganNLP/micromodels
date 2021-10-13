@@ -1,11 +1,14 @@
 """
 Logic Micromodel.
 """
-from typing import Mapping, Any, List
+from typing import Mapping, Any, List, Tuple
 
+import sys
+import time
 import dill
+from pathos.multiprocessing import ProcessingPool as Pool
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
-from src.utils import run_parallel_cpu
+from src.micromodels.mm_utils import run_parallel
 
 
 class LogicClassifier(AbstractMicromodel):
@@ -13,9 +16,10 @@ class LogicClassifier(AbstractMicromodel):
     Logic-based classifier
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, **kwargs) -> None:
         self.logic = None
         self.parallelize = False
+        self.pool_size = kwargs.get("pool_size", 4)
         super().__init__(name)
 
     def setup(self, config: Mapping[str, Any]) -> None:
@@ -64,22 +68,19 @@ class LogicClassifier(AbstractMicromodel):
         """
         return self.logic(query)
 
+    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+        """
+        Batch inference method.
+
+        :param queries: List of query utterances.
+        :return: List of binary vectors, which is represented as a list of
+            indices that correspond to a hit.
+        """
+        return run_parallel(self.logic, query_groups, self.pool_size)
+
     def is_loaded(self) -> bool:
         """
         Check if self.logic is set.
         :return: True if self.logic is set.
         """
         return self.logic is not None
-
-    def batch_infer(self, queries: List[str]) -> List[bool]:
-        """
-        Batch inference method.
-
-        :param queries: List of query utterances.
-        :return: List of classification results.
-        """
-        if self.parallelize:
-            preds = run_parallel_cpu(self.logic, queries)
-        else:
-            preds = [self.logic(query) for query in queries]
-        return preds

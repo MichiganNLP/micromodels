@@ -135,12 +135,12 @@ class Orchestrator:
             if config.get("train", True):
                 self.train_config(config)
 
-    def load_models(self) -> None:
+    def load_models(self, force_reload: bool = False) -> None:
         """
         Load all models into cache.
         """
         for config in self.configs:
-            self._load_model(config)
+            self._load_model(config, force_reload=force_reload)
 
     def _load_model(
         self, config: Mapping[str, Any], force_reload: bool = False
@@ -185,6 +185,24 @@ class Orchestrator:
         if not model:
             model = self._load_model(config)
         return {model_name: model.infer(query, do_preprocess=True)}
+
+    def batch_infer_config(
+        self, queries: List[str], config: Mapping[str, Any]
+    ) -> Mapping[str, List[Any]]:
+        """
+        Run batch inference from the micromodel specified in config.
+        :param queries: List of string utterance to run inference on.
+        :param config: Micromodel configuration.
+        :return: Mapping of micromodel name to the inference result.
+        """
+        # TODO: Preprocessing
+        self._verify_config(config)
+        model_name = get_model_name(config)
+        model = self.cache.get(model_name)
+        if not model:
+            model = self._load_model(config)
+        return {model_name: model.batch_infer(queries)}
+
 
     def infer(self, query: str) -> Mapping[str, Any]:
         """

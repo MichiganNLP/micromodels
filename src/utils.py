@@ -15,7 +15,7 @@ from pathos.multiprocessing import ProcessPool as Pool
 
 def run_parallel_cpu(func, utterances):
     """
-    Run condition_func via multiprocessing.
+    Run func via multiprocessing.
     """
     pool = Pool()
     pool.restart()

@@ -1,7 +1,7 @@
 """
 Bert Query Micromodel.
 """
-from typing import Mapping, Any, List
+from typing import Mapping, Any, List, Tuple
 
 import os
 import json
@@ -155,9 +155,9 @@ class BertQuery(AbstractMicromodel):
     """
 
     # TODO: What is the best way to make this configurable?
-    bert = SentenceTransformer(
-        "paraphrase-xlm-r-multilingual-v1", device="cuda:1"
-    )
+    # bert = SentenceTransformer(
+    #    "paraphrase-xlm-r-multilingual-v1", device="cuda:1"
+    # )
 
     def __init__(self, name: str) -> None:
         super().__init__(name)
@@ -165,6 +165,9 @@ class BertQuery(AbstractMicromodel):
         self.seed = None
         self.seed_encoding = None
         self.infer_config = None
+        self.bert = SentenceTransformer(
+            "paraphrase-xlm-r-multilingual-v1", device="cuda:1"
+        )
 
     def setup(self, config: Mapping[str, Any]) -> None:
         """
@@ -219,7 +222,7 @@ class BertQuery(AbstractMicromodel):
             raise RuntimeError("Seed is not set!")
         self.seed_encoding = self.bert.encode(self.seed)
 
-    def _infer(self, query: str) -> bool:
+    def _infer(self, query: str) -> Any:
         """
         Inner infer method. Calls self.run_bert().
 
@@ -228,6 +231,27 @@ class BertQuery(AbstractMicromodel):
         """
         similarity_results = self.run_bert([query], config=self.infer_config)
         return similarity_results[0]["max_score"] >= self.threshold
+
+    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+        """
+        Batch inference.
+
+        :param queries: List of utterance groups.
+        :return: List of binary vectors, which is represented as a list of
+            indices that correspond to a hit.
+        """
+        binary_vectors = []
+        for queries in query_groups:
+            similarity_results = self.run_bert(
+                queries, config=self.infer_config
+            )
+            binary_vector = [
+                query_idx
+                for query_idx, result in similarity_results.items()
+                if result["max_score"] >= self.threshold
+            ]
+            binary_vectors.append(binary_vector)
+        return binary_vectors
 
     def save_model(self, model_path: str) -> None:
         """

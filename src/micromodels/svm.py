@@ -1,14 +1,18 @@
 """
 SVM Micromodel.
 """
-from typing import Mapping, Any, List
+from typing import Mapping, Any, List, Tuple
 
+import sys
 import pickle
 import random
+import time
 import json
+from pathos.multiprocessing import ProcessingPool as Pool
 from nltk.classify import SklearnClassifier
 from sklearn.svm import SVC
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
+from src.micromodels.mm_utils import run_parallel
 from src.utils import preprocess_list
 
 random.seed(a=42)
@@ -19,9 +23,10 @@ class SVM(AbstractMicromodel):
     SVM implementation of a micromodel.
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name)
         self.svm_model = None
+        self.pool_size = kwargs.get("pool_size", 4)
 
     def setup(self, config: Mapping[str, Any]) -> None:
         """
@@ -114,6 +119,16 @@ class SVM(AbstractMicromodel):
         tokens = {token: True for token in query.strip().split()}
         pred = self.svm_model.classify(tokens)
         return {"true": True, "false": False}[pred]
+
+    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+        """
+        Batch inference method.
+
+        :param queries: List of query utterances.
+        :return: List of binary vectors, which is represented as a list of
+            indices that correspond to a hit.
+        """
+        return run_parallel(self._infer, query_groups, self.pool_size)
 
     def is_loaded(self) -> bool:
         """
