@@ -1,0 +1,17 @@
+{
+    "true": [
+        "That is a cute cat",
+        "cat",
+        "meow cat",
+        "The cat crossed the street",
+        "The cat is having zoomies"
+    ],
+    "false": [
+        "That is a cute dog",
+        "dog",
+        "hi dog",
+        "what a cute dog !",
+        "dog one two",
+        "dog is running around"
+    ]
+}

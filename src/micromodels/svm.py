@@ -1,14 +1,11 @@
 """
 SVM Micromodel.
 """
-from typing import Mapping, Any, List, Tuple
+from typing import Mapping, Any, List
 
-import sys
 import pickle
 import random
-import time
 import json
-from pathos.multiprocessing import ProcessingPool as Pool
 from nltk.classify import SklearnClassifier
 from sklearn.svm import SVC
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
@@ -24,25 +21,30 @@ class SVM(AbstractMicromodel):
     """
 
     def __init__(self, name: str, **kwargs) -> None:
+        """
+        kwargs:
+        :param training_data_path: (str), required.
+            File path to training data file (json).
+        :param pool_size: (int), Optional, defaults to 4.
+            Pool size for multiprocessing batch_infer.
+        """
         super().__init__(name)
         self.svm_model = None
+        if "training_data_path" not in kwargs:
+            raise ValueError("SVM requires 'training_data_path' argument.")
+
+        self.training_data_path = kwargs["training_data_path"]
         self.pool_size = kwargs.get("pool_size", 4)
 
-    def setup(self, config: Mapping[str, Any]) -> None:
-        """
-        SVM micromodels do not currently support any parameters. No-op method.
-
-        :param config: micromodel configuration.
-        """
-        return
-
-    def train(self, training_data_path: str) -> SklearnClassifier:
+    def train(self) -> None:
         """
         Train a SVM micromodel.
 
         :param training_data_path: Filepath to training data.
         """
-        with open(training_data_path, "r") as file_p:
+        if self.training_data_path is None:
+            raise RuntimeError("self.training_data_path is not set!")
+        with open(self.training_data_path, "r") as file_p:
             train_data = json.load(file_p)
         self._train(train_data)
 

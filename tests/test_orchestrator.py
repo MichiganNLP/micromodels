@@ -1,7 +1,6 @@
 """
 Unittests for orchestrator
 """
-
 import os
 import shutil
 import unittest
@@ -15,6 +14,7 @@ class TestOrchestrator(unittest.TestCase):
     """
     Testcases for Orchestrator
     """
+
     def setUp(self):
         self.base_path = os.path.join(MM_BASE_PATH, "tests")
         self.data_path = os.path.join(self.base_path, "test_data")
@@ -42,6 +42,7 @@ class TestOrchestrator(unittest.TestCase):
         Initialize configuration for Orchestrator.
         The configurations should include every type of micromodel.
         """
+
         def _logic(utterance: str) -> bool:
             """
             Logic to be used by the logic-micromodel.
@@ -51,9 +52,13 @@ class TestOrchestrator(unittest.TestCase):
         configs = [
             {
                 "model_type": "svm",
-                "data": os.path.join(self.data_path, "gender.json"),
                 "name": "test_svm",
                 "model_path": os.path.join(self.model_path, "test_svm"),
+                "setup_args": {
+                    "training_data_path": os.path.join(
+                        self.data_path, "dog_vs_cat.json"
+                    ),
+                },
             },
             {
                 "model_type": "logic",
@@ -73,16 +78,12 @@ class TestOrchestrator(unittest.TestCase):
                     ],
                     "infer_config": {
                         "k": 2,
-                        "segment_config": {
-                            "window_size": 5,
-                            "step_size": 3
-                        }
-                    }
-                }
-            }
+                        "segment_config": {"window_size": 5, "step_size": 3},
+                    },
+                },
+            },
         ]
         return configs
-
 
     @property
     def micromodel_names(self):
@@ -117,7 +118,7 @@ class TestOrchestrator(unittest.TestCase):
         Test infering all micromodels.
         """
         self.orchestrator.train_all()
-        inference = self.orchestrator.infer("I am a boy.")
+        inference = self.orchestrator.infer("cat says meow .")
         for micromodel in self.micromodel_names:
             self.assertIsInstance(inference[micromodel], bool)
             if micromodel.endswith("svm"):
@@ -126,10 +127,10 @@ class TestOrchestrator(unittest.TestCase):
         inference = self.orchestrator.infer("This is a test.")
         for micromodel in self.micromodel_names:
             self.assertIsInstance(inference[micromodel], bool)
-            if micromodel.endswith("logic") or \
-               micromodel.endswith("bert_query"):
+            if micromodel.endswith("logic") or micromodel.endswith(
+                "bert_query"
+            ):
                 self.assertEqual(inference[micromodel], True)
-
 
 
 if __name__ == "__main__":

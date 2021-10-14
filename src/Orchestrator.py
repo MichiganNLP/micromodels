@@ -102,23 +102,20 @@ class Orchestrator:
         """
         self._verify_config(config)
         model_type = config.get("model_type")
-        train_data = config.get("data")
         model_name = get_model_name(config)
 
         try:
-            model = MICROMODEL_FACTORY[model_type](model_name)
+            model = MICROMODEL_FACTORY[model_type](
+                model_name, **config.get("setup_args", {})
+            )
         except KeyError as ex:
             raise KeyError("Invalid model type %s" % model_type) from ex
 
         if not force_train and model_name in self.cache:
             return self.cache[model_name]
 
-        setup_config = config.get("setup_args", {})
-        if "name" not in setup_config:
-            setup_config["name"] = model_name
-        model.setup(setup_config)
         print("Training %s" % model_name)
-        model.train(train_data)
+        model.train()
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )
@@ -160,11 +157,9 @@ class Orchestrator:
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )
-        model = MICROMODEL_FACTORY[config["model_type"]](model_name)
-        setup_config = config.get("setup_args", {})
-        if "name" not in setup_config:
-            setup_config["name"] = model_name
-        model.setup(setup_config)
+        model = MICROMODEL_FACTORY[config["model_type"]](
+            model_name, **config.get("setup_args", {})
+        )
         model.load_model(model_path)
         self.cache[model_name] = model
         return self.cache[model_name]
@@ -202,7 +197,6 @@ class Orchestrator:
         if not model:
             model = self._load_model(config)
         return {model_name: model.batch_infer(queries)}
-
 
     def infer(self, query: str) -> Mapping[str, Any]:
         """

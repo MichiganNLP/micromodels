@@ -1,12 +1,9 @@
 """
 Logic Micromodel.
 """
-from typing import Mapping, Any, List, Tuple
+from typing import Mapping, Any, List, Callable
 
-import sys
-import time
 import dill
-from pathos.multiprocessing import ProcessingPool as Pool
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
 from src.micromodels.mm_utils import run_parallel
 
@@ -17,23 +14,24 @@ class LogicClassifier(AbstractMicromodel):
     """
 
     def __init__(self, name: str, **kwargs) -> None:
-        self.logic = None
-        self.parallelize = False
+        """
+        kwargs:
+        :param logic_func: (Callable), required.
+            Inner logic function for micromodel.
+        :param pool_size: (int), Optional, defaults to 4.
+            Pool size for multiprocessing batch_infer.
+        """
+        logic_func = kwargs.get("logic_func")
+        if logic_func is None:
+            raise ValueError(
+                "Must pass in a callable function for 'logic_func'."
+            )
+
+        self.logic = logic_func
         self.pool_size = kwargs.get("pool_size", 4)
         super().__init__(name)
 
-    def setup(self, config: Mapping[str, Any]) -> None:
-        """
-        The following properties are required for a logic micromodel:
-
-        - logic_func: Callable function with the actual logic implementation.
-        - (Optional) parallelize: Boolean value for applying the current
-          micromodel on the input data in parallel.
-        """
-        self.logic = config["logic_func"]
-        self.parallelize = config.get("parallelize", False)
-
-    def train(self, training_data_path: str) -> None:
+    def train(self) -> None:
         """
         No need to train logical classifiers. No-op method.
 

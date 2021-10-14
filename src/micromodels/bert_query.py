@@ -1,13 +1,13 @@
 """
 Bert Query Micromodel.
 """
-from typing import Mapping, Any, List, Tuple
+from typing import Mapping, Any, List
 
 import os
 import json
 from collections import defaultdict
-import torch
 import numpy as np
+import torch
 from nltk import tokenize
 from sentence_transformers import SentenceTransformer
 from sentence_transformers import util as st_util
@@ -153,53 +153,43 @@ class BertQuery(AbstractMicromodel):
     """
     Bert Query implementation of a micromodel.
     """
-
-    # TODO: What is the best way to make this configurable?
-    # bert = SentenceTransformer(
-    #    "paraphrase-xlm-r-multilingual-v1", device="cuda:1"
-    # )
-
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
-        self.threshold = None
-        self.seed = None
-        self.seed_encoding = None
-        self.infer_config = None
-        self.bert = SentenceTransformer(
-            "paraphrase-xlm-r-multilingual-v1", device="cuda:1"
-        )
-
-    def setup(self, config: Mapping[str, Any]) -> None:
+    def __init__(self, name: str, **kwargs) -> None:
         """
-        Bert Query micromodels require the following parameters:
+        kwargs:
+        :param threshold: (float) Threshold value for bert similarity score.
+        :param seed: (List[str]) Seed for Bert-Query.
+        :param device: (str) device to use for Transformer.
+            Optional, defaults to 'cuda:1'.
 
-        - threshold: float
-        - seed: List[str]
-
-        You can also specify parameters for running Bert similarity searches
-        with infer_config. See run_bert() method for parameters expected
-        in infer_config.
-
+        :param infer_config: (Mapping[str, Any]) Configurations specific to
+            run_bert(). See run_bert() method for details.
         Bert Query micromodels also support the following options:
 
-        - bert_model: SentenceTransformer instance. If unspecified, this
-          will default to a pre-trained SentenceTransformer called
-          'paraphrase-xlm-r-multilingual-v1'.
+        :param bert_model: (SentenceTransformer), Optional, defaults to None.
+            If not specified, will use the pre-trained model
+            "paraphrase-xlm-r-multilingual-v1".
         """
         required_params = ["threshold", "seed"]
         for param in required_params:
-            if param not in config:
+            if param not in kwargs:
                 raise ValueError(
-                    "Bert-Query is missing a required field %s!" % param
+                    "Bert-Query is missing the parameter '%s'" % param
                 )
 
-        bert = config.get("bert_model")
-        if isinstance(bert, SentenceTransformer):
-            self.bert = bert
+        self.threshold = kwargs["threshold"]
+        self.seed = kwargs["seed"]
+        self.seed_encoding = None
+        self.infer_config = kwargs.get("infer_config")
+        device = kwargs.get("device", "cuda:1")
+        if "bert_model" in kwargs:
+            self.bert = kwargs["bert"]
 
-        self.infer_config = config.get("infer_config")
-        self.threshold = config["threshold"]
-        self.seed = config["seed"]
+        else:
+            self.bert = SentenceTransformer(
+                "paraphrase-xlm-r-multilingual-v1", device=device
+            )
+
+        super().__init__(name)
 
     def _set_seed(self, seed: List[str]) -> None:
         """
@@ -213,10 +203,9 @@ class BertQuery(AbstractMicromodel):
         """
         self.seed_encoding = seed_encoding
 
-    def train(self, training_data_path: str) -> None:
+    def train(self) -> None:
         """
         Build seed encodings during training.
-        This train method does not use the training_data_path parameter.
         """
         if self.seed is None:
             raise RuntimeError("Seed is not set!")
@@ -283,7 +272,7 @@ class BertQuery(AbstractMicromodel):
         encoding_path = os.path.join(model_path, "seed_encodings.npy")
         with open(seed_path, "r") as file_p:
             seed = json.load(file_p)["seed"]
-        seed_encoding = np.load(encoding_path)
+        seed_encoding = np.load(encoding_path, allow_pickle=True)
 
         self._set_seed(seed)
         self._set_seed_encoding(seed_encoding)
@@ -331,33 +320,3 @@ class BertQuery(AbstractMicromodel):
         return _batch_similarity_search(
             self.bert, self.seed, self.seed_encoding, queries, config=config
         )
-
-
-def main():
-    """ Driver """
-    x = BertQuery("testing")
-    x.setup(
-        {
-            "threshold": 0.8,
-            "seed": [
-                "I loved this movie",
-                "Arya is a hungry cat",
-                "movies are fun.",
-                "hello world my name is Andrew.",
-            ],
-        }
-    )
-    x.train("z")
-    y = x.run_bert(
-        [
-            "I really liked this movie",
-            "This movie sucked",
-            "I loved this movie",
-        ]
-    )
-    z = x.infer("I think Arya is hungry")
-    breakpoint()
-
-
-if __name__ == "__main__":
-    main()
