@@ -7,18 +7,15 @@ TODO Items:
 * Configurable aggregators
 * List of aggregators
 * Format data for test_from_file()
-* batch inference
 * test_from_file()
-* save_model()?
-* load_model()?
 """
-from typing import List, Mapping, Tuple, Any
+from typing import List, Mapping, Tuple, Any, Optional
 
-import sys
-import time
+import json
 from collections import defaultdict
 import numpy as np
 from pathos.multiprocessing import ProcessingPool as Pool
+from interpret import show
 from interpret.glassbox import ExplainableBoostingClassifier
 from src.Orchestrator import Orchestrator, get_model_name
 from src.aggregators.SimpleRatioAggregator import SimpleRatioAggregator
@@ -111,7 +108,7 @@ class TaskClassifier:
 
     def featurize_data(
         self, data: List[Tuple[List[str], Any]]
-    ) -> Tuple[np.ndarray, List[str]]:
+    ) -> Mapping[str, Any]:
         """
         Featurize data, where the input is a list of tuples.
         The first element of the tuple is a list of utterances and the
@@ -120,9 +117,16 @@ class TaskClassifier:
         :param data: list of data instances. See load_data() for details
             on the data format.
 
-        :return:
-            - featurized - ndarray of shape (len(data), number of micromodels)
-            - labels - list of labels
+        :return: A dictionary with the following format:
+            {
+                "binary_vectors": {
+                    "micromodel_name: {
+                        utterance_group_idx: List[int]
+                    }, ...
+                },
+                "feature_vector": ndarray of shape (len(data), # of micromodels),
+                "labels": List of labels
+            }
         """
         utterances = [instance[0] for instance in data]
         labels = [instance[1] for instance in data]
@@ -137,7 +141,8 @@ class TaskClassifier:
             # mm_output: {utt_idx: list[int]}:
             # map utterance ids to list of matched indices
 
-            # mm_outputs is a list of binary vectors, represented as ndarrays
+            # mm_output is a list of binary vectors, represented as ndarrays
+            # Convert to actual binary vectors.
             mm_outputs = _to_binary_vectors(mm_output, utterance_lengths)
 
             feature_values = self.aggregator.aggregate(mm_outputs)
@@ -146,7 +151,35 @@ class TaskClassifier:
             else:
                 featurized = np.vstack([featurized, feature_values])
         featurized = np.transpose(featurized)
-        return featurized, labels
+        return {
+            "binary_vectors": micromodel_output,
+            "feature_vector": featurized,
+            "labels": labels,
+        }
+
+    def dump_features(self, data: Mapping[str, Any], output_path: str) -> None:
+        """
+        Dump binary vectors, features, and labels to file, along with
+        the original input text data.
+        See featurize_data() for details on the format of features.
+
+        :param data: Object with binary vectors, feature vector, and labels.
+        :param output_path: Filepath for data.
+        """
+        data["feature_vector"] = data["feature_vector"].tolist()
+        with open(output_path, "w") as file_p:
+            json.dump(data, file_p, indent=2)
+
+    def load_features(self, input_path: str) -> Mapping[str, Any]:
+        """
+        Load binary vectors, features, and labels from file.
+
+        :param input_path: Filepath for features.
+        """
+        with open(input_path, "r") as file_p:
+            data = json.load(file_p)
+        data["feature_vector"] = np.array(data["feature_vector"])
+        return data
 
     def run_micromodel(
         self,
@@ -215,7 +248,11 @@ class TaskClassifier:
             )
         return micromodel_outputs
 
-    def train(self, training_data: List[Tuple[List[str], str]]) -> None:
+    def train(
+        self,
+        training_data: List[Tuple[List[str], str]],
+        dump_filepath: Optional[str] = None,
+    ) -> None:
         """
         Train the task-specific classifier. This method includes featurizing the
         input data (i.e., running the micromodels and aggregating the results)
@@ -232,14 +269,35 @@ class TaskClassifier:
             ]
 
             See load_data() for more information.
+        :param dump_filepath: Filepath for dumping binary vectors, features,
+            labels, and original input text data.
+            If None, will not dump to file.
         """
         if self.orchestrator.num_micromodels < 2:
             raise RuntimeError(
                 "EBM requires more than 1 micromodel in order to be trained."
             )
         self.model = ExplainableBoostingClassifier()
-        x_train, y_train = self.featurize_data(training_data)
+        featurized = self.featurize_data(training_data)
+        x_train = featurized["feature_vector"]
+        y_train = featurized["labels"]
+        if dump_filepath is not None:
+            featurized["original_data"] = training_data
+            self.dump_features(featurized, dump_filepath)
         self.model.fit(x_train, y_train)
+
+    def train_featurized_file(self, feature_filepath: str) -> None:
+        """
+        Train task-specific classifier using already featurized data.
+
+        :param feature_filepath: Filepath to features and labels.
+        """
+        with open(feature_filepath, "r") as file_p:
+            data = json.load(file_p)
+        feature_vector = data["feature_vector"]
+        labels = data["labels"]
+        self.model = ExplainableBoostingClassifier()
+        self.model.fit(feature_vector, labels)
 
     def train_featurized(
         self, featurized_data: np.ndarray, labels: List[str]
@@ -279,8 +337,8 @@ class TaskClassifier:
         if self.model is None:
             raise RuntimeError("Model not loaded.")
         formatted = [(utterances, None)]
-        featurized, _ = self.featurize_data(formatted)
-        return self.infer_featurized(featurized)
+        feature_vector = self.featurize_data(formatted)["feature_vector"]
+        return self.infer_featurized(feature_vector)
 
     def infer_featurized(
         self, feature_vector: np.ndarray
@@ -316,8 +374,9 @@ class TaskClassifier:
         :return: test restuls.
         """
         predictions = []
-        x_test, groundtruth = self.featurize_data(test_data)
-        # TODO: do batch inference
+        featurized = self.featurize_data(test_data)
+        x_test = featurized["feature_vector"]
+        groundtruth = featurized["labels"]
         for row in x_test:
             prediction, _ = self.infer_featurized([row])
             predictions.append(prediction)
@@ -329,8 +388,54 @@ class TaskClassifier:
 
         accuracy = num_correct / len(groundtruth)
         return {
+            "accuracy": accuracy,
             "f1": f1(
                 predictions,
                 groundtruth,
             ),
         }
+
+    def explain_global(self) -> None:
+        """
+        Explain model's global feature importance scores.
+        """
+        if self.model is None:
+            raise RuntimeError("EBM model is not set!")
+        ebm_global = self.model.explain_global()
+        show(ebm_global)
+
+    def explain_local(self, query: str) -> None:
+        """
+        Explain model's decision on input query.
+
+        :param query: Input utterance.
+        """
+
+    def inspect_provenance(
+        self, features_filepath: str, micromodel_name: str
+    ) -> None:
+        """
+        Show the input text that corresponds to "hits" based on binary vectors.
+
+        :param features_filepath: Filepath to features.
+        :param micromodel_name: Name of the micromodel to inspect.
+        """
+        features = self.load_features(features_filepath)
+        text_data = features["original_data"]
+        binary_vectors = features["binary_vectors"]
+        if micromodel_name not in binary_vectors:
+            raise RuntimeError(
+                "Could not find binary vectors for %s" % micromodel_name
+            )
+        binary_vectors = binary_vectors[micromodel_name]
+        assert len(text_data) == len(binary_vectors)
+
+        all_hits = []
+        for idx, input_data in enumerate(text_data):
+            # Input data is in the format of
+            # [ ([sentence 1, sentence 2, ...], label), ...]
+            sentences = input_data[0]
+            hit_idxs = binary_vectors[idx]
+            hits = np.array(sentences)[hit_idxs]
+            all_hits.extend(hits)
+        return all_hits
