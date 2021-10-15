@@ -1,13 +1,5 @@
 """
 Task-specific classifier.
-
-TODO Items:
-* Dump features into file, both train and test.
-* Load features
-* Configurable aggregators
-* List of aggregators
-* Format data for test_from_file()
-* test_from_file()
 """
 from typing import List, Mapping, Tuple, Any, Optional
 
