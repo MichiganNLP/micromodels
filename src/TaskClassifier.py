@@ -1,7 +1,7 @@
 """
 Task-specific classifier.
 """
-from typing import List, Mapping, Tuple, Any, Optional
+from typing import List, Mapping, Tuple, Any
 
 import json
 import numpy as np
@@ -240,9 +240,7 @@ class TaskClassifier:
             )
         return micromodel_outputs
 
-    def fit(
-        self, featurized_data: np.ndarray, labels: List[str]
-    ) -> None:
+    def fit(self, featurized_data: np.ndarray, labels: List[str]) -> None:
         """
         Train task-specific classifier using already featurized data.
 
@@ -268,6 +266,19 @@ class TaskClassifier:
         self.model = ExplainableBoostingClassifier()
         self.model.fit(featurized_data, labels)
 
+    def predict(self, data: np.ndarray) -> List[Any]:
+        """
+        Run inference on input data.
+
+        :param data: ndarray of shape (n_samples, n_features).
+        :return: List of inference results
+        """
+        predictions = []
+        for row in data:
+            prediction, _ = self._infer_featurized([row])
+            predictions.append(prediction)
+        return predictions
+
     def infer(self, utterances: List[str]) -> Tuple[Any, float]:
         """
         Infer on a single instance (list of utterances).
@@ -279,9 +290,9 @@ class TaskClassifier:
             raise RuntimeError("Model not loaded.")
         formatted = [(utterances, None)]
         feature_vector = self.featurize_data(formatted)["feature_vector"]
-        return self.infer_featurized(feature_vector)
+        return self._infer_featurized(feature_vector)
 
-    def infer_featurized(
+    def _infer_featurized(
         self, feature_vector: np.ndarray
     ) -> Tuple[Any, float]:
         """
@@ -312,13 +323,10 @@ class TaskClassifier:
         :param test_data: data to test.
         :return: test restuls.
         """
-        predictions = []
         featurized = self.featurize_data(test_data)
         x_test = featurized["feature_vector"]
         groundtruth = featurized["labels"]
-        for row in x_test:
-            prediction, _ = self.infer_featurized([row])
-            predictions.append(prediction)
+        predictions = self.predict(x_test)
 
         num_correct = 0
         for idx, pred in enumerate(predictions):
@@ -334,7 +342,9 @@ class TaskClassifier:
             ),
         }
 
-    def test_featurized(self, featurized_data: np.ndarray, labels: List[str]) -> Mapping[str, Any]:
+    def _test_featurized(
+        self, featurized_data: np.ndarray, labels: List[str]
+    ) -> Mapping[str, Any]:
         """
         Test task-specific classifier using already featurized data.
 
@@ -343,10 +353,7 @@ class TaskClassifier:
         :param labels: list of labels.
         :return: test results.
         """
-        predictions = []
-        for row in featurized_data:
-            prediction, _ = self.infer_featurized([row])
-            predictions.append(prediction)
+        predictions = self.predict(featurized_data)
 
         num_correct = 0
         for idx, pred in enumerate(predictions):
