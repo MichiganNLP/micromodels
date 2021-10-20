@@ -4,14 +4,12 @@ Task-specific classifier.
 from typing import List, Mapping, Tuple, Any, Optional
 
 import json
-from collections import defaultdict
 import numpy as np
-from pathos.multiprocessing import ProcessingPool as Pool
 from interpret import show
 from interpret.glassbox import ExplainableBoostingClassifier
 from src.Orchestrator import Orchestrator, get_model_name
 from src.aggregators.SimpleRatioAggregator import SimpleRatioAggregator
-from src.metrics import recall, precision, f1
+from src.metrics import f1
 
 
 def to_binary_vectors(

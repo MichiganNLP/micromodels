@@ -15,31 +15,16 @@ class SimpleRatioAggregator(AbstractAggregator):
 
     def aggregate_single(self, mm_vector):
         """
-        aggregate
+        Aggregate a single micromodel vector.
         """
         matched_count = np.count_nonzero(mm_vector)
         return matched_count / len(mm_vector)
 
     def aggregate(self, mm_vectors):
         """
-        Aggregate
+        Aggregate all micromodel vectors.
         """
-
-        def normalize(feature_value, mean, std):
-            """
-            Normalize feature value.
-            """
-            return (feature_value - mean) / std
-
         ratios = np.array(
             [self.aggregate_single(vector) for vector in mm_vectors]
         )
-        # TODO:
-        # mean = np.mean(ratios)
-        # std = np.std(ratios)
-
-        # normalized_ratios = [
-        #    normalize(ratio, mean, std) for ratio in ratios
-        # ]
-        # return normalized_ratios
         return ratios

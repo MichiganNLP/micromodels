@@ -104,7 +104,9 @@ def _batch_similarity_search(
     ]
 
     query_embeddings = bert.encode(
-        [query[1] for query in query_idx_map], batch_size=16, convert_to_tensor=True
+        [query[1] for query in query_idx_map],
+        batch_size=16,
+        convert_to_tensor=True,
     )
 
     if isinstance(seed_encoding, (list, np.ndarray)):
@@ -153,6 +155,7 @@ class BertQuery(AbstractMicromodel):
     """
     Bert Query implementation of a micromodel.
     """
+
     def __init__(self, name: str, **kwargs) -> None:
         """
         kwargs:
