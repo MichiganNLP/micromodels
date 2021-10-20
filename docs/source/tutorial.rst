@@ -4,9 +4,8 @@ Tutorial
 To use the micromodel framework, first we need to configurate a list of micromodels.
 Each micromodel is configurable using a dictionary.
 
-The following example builds 3 micromodels, one for a SVM classifier, one for a logical micromodel, and one for a bert-query micromodel.
+The following example builds 3 micromodels, one for a SVM classifier, one for a logical micromodel, and one for a bert-query micromodel.::
 
-```
 configs = [
     {
         "model_type": "svm",
@@ -39,7 +38,6 @@ configs = [
         },
     },
 ]
-```
 
 Each configuration requires at least two fields: `model_type` and `name`.
 `model_type` specifies what kind of micromodel to build.
@@ -51,20 +49,18 @@ Dependingn the type of micromodel, each configuration will require different arg
 Micromodels are defined in `src/micromodels/`.
 
 
-Once you've configured your micromodels, you can initialize your `Orchestrator`. The Orchestrator basically manages training, loading, and inferring from micromodels.
+Once you've configured your micromodels, you can initialize your `Orchestrator`. The Orchestrator basically manages training, loading, and inferring from micromodels.::
 
 
-```
 basepath = os.environ.get("MM_HOME")
 orchestrator = Orchestrator(basepath)
 orchestrator.set_configs(configs)
-```
 
 The basepath is the default location that the orchestrator will save and load micromodels from, if `model_path` is not specified for any of the micromodels.
 
-Once your orchestrator is set, you can now train and infer from your micromodels.
+Once your orchestrator is set, you can now train and infer from your micromodels.::
 
-```
 orchestrator.train_all()
 orchestrator.infer("This is a test")
-```
+
+

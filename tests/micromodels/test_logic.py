@@ -57,7 +57,7 @@ class TestLogicClassifier(MicromodelUnittest):
         """
         Tests the following methods in the following order:
 
-        save_model(), load_model(), infer(), batch_infer().
+        save_model(), load_model(), run(), batch_run().
         """
         mm = self.micromodel
 
@@ -71,10 +71,10 @@ class TestLogicClassifier(MicromodelUnittest):
         mm.load_model(model_path)
         self.assertTrue(callable(mm.logic))
 
-        prediction = mm.infer("Cute cat !")
+        prediction = mm.run("Cute cat !")
         self.assertEqual(prediction, True)
 
-        predictions = mm.batch_infer(
+        predictions = mm.batch_run(
             [
                 ["This is a cat", "This is a dog"],
                 ["testing dog", "testing cat"],

@@ -22,9 +22,9 @@ class AbstractMicromodel:
         """
         raise NotImplementedError("build() not implemented.")
 
-    def infer(self, query: str, do_preprocess: Optional[bool] = True) -> Any:
+    def run(self, query: str, do_preprocess: Optional[bool] = True) -> Any:
         """
-        Run inference.
+        Run micromodel (inference).
 
         :param query: string utterance to query.
         :param do_preprocess: flag to determine whether to preprocess query.
@@ -32,37 +32,37 @@ class AbstractMicromodel:
         """
         if do_preprocess:
             query = preprocess(query)
-        return self._infer(query)
+        return self._run(query)
 
-    def _infer(self, query: str) -> Any:
+    def _run(self, query: str) -> Any:
         """
-        Inner infer function.
+        Inner run function.
 
         :param query: string utterance to query.
         :return: Inference results.
         """
-        raise NotImplementedError("_infer() not implemented.")
+        raise NotImplementedError("_run() not implemented.")
 
-    def batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+    def batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
         """
-        Batch inference.
+        Batch run.
 
         :param queries: List of query objects (indices and list of strings).
         :return: List of binary vectors, which is represented as a list of
             indices that correspond to a hit.
         """
         # TODO: preprocessing
-        return self._batch_infer(query_groups)
+        return self._batch_run(query_groups)
 
-    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+    def _batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
         """
-        Inner batch inference.
+        Inner batch run.
 
         :param queries: List of query objects (indices and list of strings).
         :return: List of binary vectors, which is represented as a list of
             indices that correspond to a hit.
         """
-        raise NotImplementedError("_batch_infer() not implemented.")
+        raise NotImplementedError("_batch_run() not implemented.")
 
     def save_model(self, model_path: str) -> None:
         """

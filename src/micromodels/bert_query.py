@@ -214,9 +214,9 @@ class BertQuery(AbstractMicromodel):
             raise RuntimeError("Seed is not set!")
         self.seed_encoding = self.bert.encode(self.seed)
 
-    def _infer(self, query: str) -> Any:
+    def _run(self, query: str) -> Any:
         """
-        Inner infer method. Calls self.run_bert().
+        Inner run method. Calls self.run_bert().
 
         :param query: String utterance to query.
         :return: Boolean result.
@@ -224,9 +224,9 @@ class BertQuery(AbstractMicromodel):
         similarity_results = self.run_bert([query], config=self.infer_config)
         return similarity_results[0]["max_score"] >= self.threshold
 
-    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+    def _batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
         """
-        Batch inference.
+        Batch run.
 
         :param queries: List of utterance groups.
         :return: List of binary vectors, which is represented as a list of

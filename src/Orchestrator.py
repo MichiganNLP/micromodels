@@ -177,7 +177,7 @@ class Orchestrator:
         model = self.cache.get(model_name)
         if not model:
             model = self._load_model(config)
-        return {model_name: model.infer(query, do_preprocess=True)}
+        return {model_name: model.run(query, do_preprocess=True)}
 
     def batch_infer_config(
         self, queries: List[str], config: Mapping[str, Any]
@@ -194,7 +194,7 @@ class Orchestrator:
         model = self.cache.get(model_name)
         if not model:
             model = self._load_model(config)
-        return {model_name: model.batch_infer(queries)}
+        return {model_name: model.batch_run(queries)}
 
     def infer(self, query: str) -> Mapping[str, Any]:
         """

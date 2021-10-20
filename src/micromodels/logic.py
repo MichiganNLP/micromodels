@@ -19,7 +19,7 @@ class LogicClassifier(AbstractMicromodel):
         :param logic_func: (Callable), required.
             Inner logic function for micromodel.
         :param pool_size: (int), Optional, defaults to 4.
-            Pool size for multiprocessing batch_infer.
+            Pool size for multiprocessing batch_run.
         """
         logic_func = kwargs.get("logic_func")
         if logic_func is None:
@@ -55,18 +55,18 @@ class LogicClassifier(AbstractMicromodel):
         with open(model_path, "rb") as file_p:
             self.logic = dill.load(file_p)
 
-    def _infer(self, query: str) -> bool:
+    def _run(self, query: str) -> bool:
         """
-        Inner infer method. Calls self.logic method.
+        Inner run method. Calls self.logic method.
 
         :param query: String utterance to query.
         :return: Boolean result.
         """
         return self.logic(query)
 
-    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+    def _batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
         """
-        Batch inference method.
+        Batch run method.
 
         :param queries: List of query utterances.
         :return: List of binary vectors, which is represented as a list of

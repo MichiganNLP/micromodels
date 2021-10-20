@@ -60,7 +60,7 @@ class TestBertQuery(MicromodelUnittest):
         """
         Tests the following methods in the following order:
 
-        save_model(), load_model(), infer(), batch_infer().
+        save_model(), load_model(), run(), batch_run().
         """
         mm = self.micromodel
 
@@ -77,10 +77,10 @@ class TestBertQuery(MicromodelUnittest):
         self.assertIsInstance(mm.seed, list)
         self.assertIsInstance(mm.seed_encoding, np.ndarray)
 
-        prediction = mm.infer("That is a cat")
+        prediction = mm.run("That is a cat")
         self.assertEqual(prediction, True)
 
-        predictions = mm.batch_infer(
+        predictions = mm.batch_run(
             [
                 ["This is a cat", "This is a dog"],
                 ["testing dog", "that is a cat"],

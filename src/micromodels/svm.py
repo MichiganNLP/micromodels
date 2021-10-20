@@ -26,7 +26,7 @@ class SVM(AbstractMicromodel):
         :param training_data_path: (str), required.
             File path to training data file (json).
         :param pool_size: (int), Optional, defaults to 4.
-            Pool size for multiprocessing batch_infer.
+            Pool size for multiprocessing batch_run.
         """
         super().__init__(name)
         self.svm_model = None
@@ -108,9 +108,9 @@ class SVM(AbstractMicromodel):
         with open(model_path, "rb") as file_p:
             self.svm_model = pickle.load(file_p)
 
-    def _infer(self, query: str) -> bool:
+    def _run(self, query: str) -> bool:
         """
-        Innfer infer method. Calls self.svm_model.classify().
+        Innfer run method. Calls self.svm_model.classify().
 
         :param query: Utterance to classify.
         :return: Inference result, either True or False.
@@ -122,15 +122,15 @@ class SVM(AbstractMicromodel):
         pred = self.svm_model.classify(tokens)
         return {"true": True, "false": False}[pred]
 
-    def _batch_infer(self, query_groups: List[List[str]]) -> List[List[int]]:
+    def _batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
         """
-        Batch inference method.
+        Batch run method.
 
         :param queries: List of query utterances.
         :return: List of binary vectors, which is represented as a list of
             indices that correspond to a hit.
         """
-        return run_parallel(self._infer, query_groups, self.pool_size)
+        return run_parallel(self._run, query_groups, self.pool_size)
 
     def is_loaded(self) -> bool:
         """
