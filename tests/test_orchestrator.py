@@ -95,11 +95,11 @@ class TestOrchestrator(unittest.TestCase):
             for config in self.configs
         ]
 
-    def test_train_all(self):
+    def test_build_all_micromodels(self):
         """
         Test training all configurations
         """
-        self.orchestrator.train_all()
+        self.orchestrator.build_all_micromodels()
         for micromodel_name in self.micromodel_names:
             self.assertIn(micromodel_name, self.orchestrator.cache)
 
@@ -107,7 +107,7 @@ class TestOrchestrator(unittest.TestCase):
         """
         Test loading of models.
         """
-        self.orchestrator.train_all()
+        self.orchestrator.build_all_micromodels()
         self.orchestrator.flush_cache()
         self.orchestrator.load_models()
         for micromodel_name in self.micromodel_names:
@@ -117,7 +117,7 @@ class TestOrchestrator(unittest.TestCase):
         """
         Test infering all micromodels.
         """
-        self.orchestrator.train_all()
+        self.orchestrator.build_all_micromodels()
         inference = self.orchestrator.infer("cat says meow .")
         for micromodel in self.micromodel_names:
             self.assertIsInstance(inference[micromodel], bool)

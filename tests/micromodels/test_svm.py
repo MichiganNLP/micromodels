@@ -55,11 +55,11 @@ class TestSVM(MicromodelUnittest):
         """
         Tests the following methods in the following order:
 
-        train(), save_model(), load_model(), infer(), batch_infer().
+        build(), save_model(), load_model(), infer(), batch_infer().
         """
         mm = self.micromodel
 
-        mm.train()
+        mm.build()
         self.assertIsInstance(mm.svm_model, SklearnClassifier)
 
         model_path = self.config["model_path"]

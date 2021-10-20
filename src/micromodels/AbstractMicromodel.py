@@ -16,11 +16,11 @@ class AbstractMicromodel:
         """
         self.name = name
 
-    def train(self) -> None:
+    def build(self) -> None:
         """
         Train a micromodel.
         """
-        raise NotImplementedError("train() not implemented.")
+        raise NotImplementedError("build() not implemented.")
 
     def infer(self, query: str, do_preprocess: Optional[bool] = True) -> Any:
         """

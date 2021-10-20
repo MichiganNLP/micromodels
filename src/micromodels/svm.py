@@ -36,9 +36,9 @@ class SVM(AbstractMicromodel):
         self.training_data_path = kwargs["training_data_path"]
         self.pool_size = kwargs.get("pool_size", 4)
 
-    def train(self) -> None:
+    def build(self) -> None:
         """
-        Train a SVM micromodel.
+        Build a SVM micromodel.
 
         :param training_data_path: Filepath to training data.
         """
@@ -46,9 +46,9 @@ class SVM(AbstractMicromodel):
             raise RuntimeError("self.training_data_path is not set!")
         with open(self.training_data_path, "r") as file_p:
             train_data = json.load(file_p)
-        self._train(train_data)
+        self._build(train_data)
 
-    def _train(self, train_data: Mapping[str, List[str]]) -> None:
+    def _build(self, train_data: Mapping[str, List[str]]) -> None:
         """
         Inner train method.
 

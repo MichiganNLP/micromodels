@@ -64,7 +64,7 @@ class TestBertQuery(MicromodelUnittest):
         """
         mm = self.micromodel
 
-        mm.train()
+        mm.build()
         self.assertIsInstance(mm.bert, SentenceTransformer)
 
         model_path = self.config["model_path"]

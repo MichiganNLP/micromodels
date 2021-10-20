@@ -31,11 +31,9 @@ class LogicClassifier(AbstractMicromodel):
         self.pool_size = kwargs.get("pool_size", 4)
         super().__init__(name)
 
-    def train(self) -> None:
+    def build(self) -> None:
         """
-        No need to train logical classifiers. No-op method.
-
-        :param training_data_path: Filepath to training data.
+        No need to build logical classifiers. No-op method.
         """
         return
 

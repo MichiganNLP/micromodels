@@ -22,7 +22,6 @@ def example_experiment():
 
     mm_base_path = os.environ.get("MM_HOME")
     imdb_data_path = os.path.join(mm_base_path, "example/imdb_dataset.json")
-    clf = IMDbClassifier(mm_base_path)
 
     configs = [
         {
@@ -38,12 +37,14 @@ def example_experiment():
             "model_path": "/home/andrew/micromodels/models/good_logic",
         },
     ]
-    clf.set_configs(configs)
+    clf = IMDbClassifier(mm_base_path, configs)
     clf.load_micromodels()
 
     train_data, test_data = clf.load_data(imdb_data_path, train_ratio=0.7)
-    clf.train(train_data)
-    clf.train(train_data)
+    featurized = clf.featurize_data(train_data)
+    feature_vector = featurized["feature_vector"]
+    labels = featurized["labels"]
+    clf.fit(feature_vector, labels)
     print(
         clf.infer(
             ["I liked this movie.", "It was a good movie", "It was wonderful"]

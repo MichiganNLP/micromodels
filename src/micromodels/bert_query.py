@@ -206,9 +206,9 @@ class BertQuery(AbstractMicromodel):
         """
         self.seed_encoding = seed_encoding
 
-    def train(self) -> None:
+    def build(self) -> None:
         """
-        Build seed encodings during training.
+        Build seed encodings during build.
         """
         if self.seed is None:
             raise RuntimeError("Seed is not set!")

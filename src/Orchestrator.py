@@ -1,6 +1,6 @@
 """
 Orchestrate micromodels.
-An Orchestrator is responsible for training, loading,
+An Orchestrator is responsible for building, loading,
 and running inference of multiple micromodels.
 """
 
@@ -28,7 +28,7 @@ def get_model_name(config: Mapping[str, Any]) -> str:
 
 class Orchestrator:
     """
-    An Orchestrator is responsible for training, loading, and predicting
+    An Orchestrator is responsible for building, loading, and predicting
     from multiple micromodels.
     """
 
@@ -85,16 +85,16 @@ class Orchestrator:
             if field not in config:
                 raise ValueError("Invalid config: %s missing" % field)
 
-    def train_config(
-        self, config: Mapping[str, Any], force_train=False
+    def build_micromodel_from_config(
+        self, config: Mapping[str, Any], force_rebuild=False
     ) -> AbstractMicromodel:
         """
         Fetch micromodel as specified in the input config.
-        If the micromodel has not been trained yet, this method will
-        train the model, add it to the cache, and return the model.
+        If the micromodel has not been built yet, this method will
+        build the model, add it to the cache, and return the model.
 
         :param config: a micromodel configuration.
-        :param force_train: flag for forcing a retrain.
+        :param force_rebuild: flag for forcing a re-build.
         :return: Instance of a micromodel.
         :raise KeyError: raised when an invalid model type is specified.
         """
@@ -109,11 +109,11 @@ class Orchestrator:
         except KeyError as ex:
             raise KeyError("Invalid model type %s" % model_type) from ex
 
-        if not force_train and model_name in self.cache:
+        if not force_rebuild and model_name in self.cache:
             return self.cache[model_name]
 
         print("Training %s" % model_name)
-        model.train()
+        model.build()
         model_path = config.get(
             "model_path", os.path.join(self.model_basepath, model_name)
         )
@@ -122,13 +122,13 @@ class Orchestrator:
         self.cache[model_name] = model
         return self.cache[model_name]
 
-    def train_all(self) -> None:
+    def build_all_micromodels(self) -> None:
         """
-        Train all micromodels specified in self.configs.
+        Build all micromodels specified in self.configs.
         """
         for config in self.configs:
-            if config.get("train", True):
-                self.train_config(config)
+            if config.get("build", True):
+                self.build_micromodel_from_config(config)
 
     def load_models(self, force_reload: bool = False) -> None:
         """

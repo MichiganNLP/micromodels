@@ -90,7 +90,7 @@ class TaskClassifier:
         """
         Load all micromodels, while training those that need training.
         """
-        self.orchestrator.train_all()
+        self.orchestrator.build_all_micromodels()
         self.orchestrator.load_models(force_reload=True)
 
     def featurize_data(
@@ -107,6 +107,7 @@ class TaskClassifier:
         :return: A dictionary with the following format:
         ```
             {
+                "original_data": data,
                 "binary_vectors": {
                     "micromodel_name: {
                         utterance_group_idx: List[int]
@@ -141,6 +142,7 @@ class TaskClassifier:
                 featurized = np.vstack([featurized, feature_values])
         featurized = np.transpose(featurized)
         return {
+            "original_data": data,
             "binary_vectors": micromodel_output,
             "feature_vector": featurized,
             "labels": labels,
@@ -238,58 +240,7 @@ class TaskClassifier:
             )
         return micromodel_outputs
 
-    def train(
-        self,
-        training_data: List[Tuple[List[str], str]],
-        dump_filepath: Optional[str] = None,
-    ) -> None:
-        """
-        Train the task-specific classifier. This method includes featurizing the
-        input data (i.e., running the micromodels and aggregating the results)
-        and feeding the featurized data to the task-specific classifier.
-
-        :param training_data: Training data in the following format:
-
-            [
-
-                ([sentence_1, sentence_2, ...], label),
-
-                ...
-
-            ]
-
-            See load_data() for more information.
-        :param dump_filepath: Filepath for dumping binary vectors, features,
-            labels, and original input text data.
-            If None, will not dump to file.
-        """
-        if self.orchestrator.num_micromodels < 2:
-            raise RuntimeError(
-                "EBM requires more than 1 micromodel in order to be trained."
-            )
-        self.model = ExplainableBoostingClassifier()
-        featurized = self.featurize_data(training_data)
-        x_train = featurized["feature_vector"]
-        y_train = featurized["labels"]
-        if dump_filepath is not None:
-            featurized["original_data"] = training_data
-            self.dump_features(featurized, dump_filepath)
-        self.model.fit(x_train, y_train)
-
-    def train_featurized_file(self, feature_filepath: str) -> None:
-        """
-        Train task-specific classifier using already featurized data.
-
-        :param feature_filepath: Filepath to features and labels.
-        """
-        with open(feature_filepath, "r") as file_p:
-            data = json.load(file_p)
-        feature_vector = data["feature_vector"]
-        labels = data["labels"]
-        self.model = ExplainableBoostingClassifier()
-        self.model.fit(feature_vector, labels)
-
-    def train_featurized(
+    def fit(
         self, featurized_data: np.ndarray, labels: List[str]
     ) -> None:
         """
