@@ -38,7 +38,6 @@ def example_experiment():
         },
     ]
     clf = IMDbClassifier(mm_base_path, configs)
-    clf.load_micromodels()
 
     train_data, test_data = clf.load_data(imdb_data_path, train_ratio=0.7)
     featurized = clf.featurize_data(train_data)

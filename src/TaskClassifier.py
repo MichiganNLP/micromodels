@@ -59,6 +59,7 @@ class TaskClassifier:
         # TODO: Load this from config file.
         # TODO: Make this a list of aggregators
         self.aggregator = SimpleRatioAggregator()
+        self._init_micromodels()
 
     def load_data(
         self, data_path: str = None, **kwargs
@@ -78,7 +79,7 @@ class TaskClassifier:
         """
         raise NotImplementedError("load_data() not implemented!")
 
-    def set_configs(self, configs: List[Mapping[str, Any]]) -> None:
+    def _set_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """
         Set configs for the orchestrator.
 
@@ -86,10 +87,12 @@ class TaskClassifier:
         """
         self.orchestrator.set_configs(configs)
 
-    def load_micromodels(self) -> None:
+    def _init_micromodels(self) -> None:
         """
-        Load all micromodels, while training those that need training.
+        Initialize all micromodels, by either loading them from file
+        or training them if needed.
         """
+        print("Initializing micromodels...")
         self.orchestrator.build_all_micromodels()
         self.orchestrator.load_models(force_reload=True)
 
