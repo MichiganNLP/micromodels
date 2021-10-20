@@ -33,17 +33,15 @@ class Orchestrator:
     """
 
     def __init__(
-        self, base_path: str, configs: Optional[List[Mapping[str, Any]]] = None
+        self, base_path: str, configs: List[Mapping[str, Any]] = None
     ):
         """
         :param base_path: filesystem path to where micromodels will be stored.
         :param configs: list of micromodel configurations.
         """
-        self.pipeline = []
         self.cache = {}
         self.model_basepath = base_path
-        if configs is not None:
-            self.set_configs(configs)
+        self.set_configs(configs)
 
     def set_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """

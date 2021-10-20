@@ -55,9 +55,7 @@ class TaskClassifier:
         :param configs: list of configurations for each micromodel.
         """
         self.model = None
-        self.orchestrator = Orchestrator(mm_basepath)
-        if configs:
-            self.set_configs(configs)
+        self.orchestrator = Orchestrator(mm_basepath, configs)
         # TODO: Load this from config file.
         # TODO: Make this a list of aggregators
         self.aggregator = SimpleRatioAggregator()
@@ -87,7 +85,6 @@ class TaskClassifier:
         :param configs: list of configurations for each micromodel.
         """
         self.orchestrator.set_configs(configs)
-        self.features = [get_model_name(config) for config in configs]
 
     def load_micromodels(self) -> None:
         """
@@ -108,6 +105,7 @@ class TaskClassifier:
             on the data format.
 
         :return: A dictionary with the following format:
+        ```
             {
                 "binary_vectors": {
                     "micromodel_name: {
@@ -117,6 +115,7 @@ class TaskClassifier:
                 "feature_vector": ndarray of shape (len(data), # of micromodels),
                 "labels": List of labels
             }
+        ```
         """
         utterances = [instance[0] for instance in data]
         labels = [instance[1] for instance in data]
@@ -412,8 +411,6 @@ class TaskClassifier:
             ),
         }
 
-
-
     def explain_global(self) -> None:
         """
         Explain model's global feature importance scores.
@@ -431,15 +428,19 @@ class TaskClassifier:
         """
 
     def inspect_provenance(
-        self, features_filepath: str, micromodel_name: str
-    ) -> None:
+        self, features: Mapping[str, Any], micromodel_name: str
+    ) -> List[str]:
         """
         Show the input text that corresponds to "hits" based on binary vectors.
 
-        :param features_filepath: Filepath to features.
+        :param features: Dictionary with feature information.
+            Requires 'original_data' and 'binary_vectors' fields.
         :param micromodel_name: Name of the micromodel to inspect.
+        :return: List of string utterances that correspond to hits.
         """
-        features = self.load_features(features_filepath)
+        for req in ["original_data", "binary_vectors"]:
+            if req not in features:
+                raise ValueError("%s missing in features argument!" % req)
         text_data = features["original_data"]
         binary_vectors = features["binary_vectors"]
         if micromodel_name not in binary_vectors:

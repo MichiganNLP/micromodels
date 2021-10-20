@@ -21,7 +21,7 @@ class TestOrchestrator(unittest.TestCase):
         self.model_path = os.path.join(self.base_path, "test_models")
 
         self.configs = self.initialize_config()
-        self.orchestrator = Orchestrator(self.model_path)
+        self.orchestrator = Orchestrator(self.model_path, self.configs)
         self.orchestrator.set_configs(self.configs)
 
     def tearDown(self):
