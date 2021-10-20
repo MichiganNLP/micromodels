@@ -22,7 +22,6 @@ class TestOrchestrator(unittest.TestCase):
 
         self.configs = self.initialize_config()
         self.orchestrator = Orchestrator(self.model_path, self.configs)
-        self.orchestrator.set_configs(self.configs)
 
     def tearDown(self):
         """
@@ -95,36 +94,36 @@ class TestOrchestrator(unittest.TestCase):
             for config in self.configs
         ]
 
-    def test_build_all_micromodels(self):
+    def test_build_micromodels(self):
         """
         Test training all configurations
         """
-        self.orchestrator.build_all_micromodels()
+        self.orchestrator.build_micromodels()
         for micromodel_name in self.micromodel_names:
             self.assertIn(micromodel_name, self.orchestrator.cache)
 
-    def test_load_models(self):
+    def test_load_micromodels(self):
         """
         Test loading of models.
         """
-        self.orchestrator.build_all_micromodels()
+        self.orchestrator.build_micromodels()
         self.orchestrator.flush_cache()
-        self.orchestrator.load_models()
+        self.orchestrator.load_micromodels()
         for micromodel_name in self.micromodel_names:
             self.assertIn(micromodel_name, self.orchestrator.cache)
 
-    def test_inference(self):
+    def test_run_micromodels(self):
         """
         Test infering all micromodels.
         """
-        self.orchestrator.build_all_micromodels()
-        inference = self.orchestrator.infer("cat says meow .")
+        self.orchestrator.build_micromodels()
+        inference = self.orchestrator.run_micromodels("cat says meow .")
         for micromodel in self.micromodel_names:
             self.assertIsInstance(inference[micromodel], bool)
             if micromodel.endswith("svm"):
                 self.assertEqual(inference[micromodel], True)
 
-        inference = self.orchestrator.infer("This is a test.")
+        inference = self.orchestrator.run_micromodels("This is a test.")
         for micromodel in self.micromodel_names:
             self.assertIsInstance(inference[micromodel], bool)
             if micromodel.endswith("logic") or micromodel.endswith(

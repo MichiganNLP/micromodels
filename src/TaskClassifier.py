@@ -79,22 +79,14 @@ class TaskClassifier:
         """
         raise NotImplementedError("load_data() not implemented!")
 
-    def _set_configs(self, configs: List[Mapping[str, Any]]) -> None:
-        """
-        Set configs for the orchestrator.
-
-        :param configs: list of configurations for each micromodel.
-        """
-        self.orchestrator.set_configs(configs)
-
     def _init_micromodels(self) -> None:
         """
         Initialize all micromodels, by either loading them from file
         or training them if needed.
         """
         print("Initializing micromodels...")
-        self.orchestrator.build_all_micromodels()
-        self.orchestrator.load_models(force_reload=True)
+        self.orchestrator.build_micromodels()
+        self.orchestrator.load_micromodels(force_reload=True)
 
     def featurize_data(
         self, data: List[Tuple[List[str], Any]]
@@ -116,7 +108,7 @@ class TaskClassifier:
                         utterance_group_idx: List[int]
                     }, ...
                 },
-                "feature_vector": ndarray of shape (len(data), # of micromodels),
+                "feature_vector": ndarray of shape (len(data), # micromodels),
                 "labels": List of labels
             }
         ```
@@ -197,10 +189,10 @@ class TaskClassifier:
         if not model_name:
             raise RuntimeError("name not found in config.")
 
-        binary_vectors = self.orchestrator.batch_infer_config(
-            utterances, config
+        binary_vectors = self.orchestrator.run_micromodel_batch(
+            model_name, utterances
         )
-        return binary_vectors[model_name]
+        return binary_vectors
 
     def run_micromodels(
         self, utterances: List[List[str]]

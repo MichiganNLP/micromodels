@@ -4,7 +4,7 @@ An Orchestrator is responsible for building, loading,
 and running inference of multiple micromodels.
 """
 
-from typing import List, Mapping, Any, Optional
+from typing import List, Mapping, Any
 
 import os
 from src.factory import MICROMODEL_FACTORY
@@ -21,9 +21,7 @@ def get_model_name(config: Mapping[str, Any]) -> str:
     """
     if "name" not in config:
         raise ValueError("Missing %s in config." % "name")
-    if "model_type" not in config:
-        raise ValueError("Missing %s in config." % "model_type")
-    return "%s_%s" % (config["name"], config["model_type"])
+    return config["name"]
 
 
 class Orchestrator:
@@ -41,9 +39,9 @@ class Orchestrator:
         """
         self.cache = {}
         self.model_basepath = base_path
-        self.set_configs(configs)
+        self._set_configs(configs)
 
-    def set_configs(self, configs: List[Mapping[str, Any]]) -> None:
+    def _set_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """
         Set Orchestrator's configuration.
 
@@ -52,6 +50,15 @@ class Orchestrator:
         """
         self._verify_configs(configs)
         self.configs = configs
+
+    def _get_config_by_name(self, name: str) -> Mapping[str, Any]:
+        """
+        Get a config by its micromodel name.
+        """
+        return {
+            get_model_name(config): config
+            for config in self.configs
+        }.get(name)
 
     def _verify_configs(self, configs: List[Mapping[str, Any]]) -> None:
         """
@@ -85,7 +92,7 @@ class Orchestrator:
             if field not in config:
                 raise ValueError("Invalid config: %s missing" % field)
 
-    def build_micromodel_from_config(
+    def _build_micromodel(
         self, config: Mapping[str, Any], force_rebuild=False
     ) -> AbstractMicromodel:
         """
@@ -122,22 +129,22 @@ class Orchestrator:
         self.cache[model_name] = model
         return self.cache[model_name]
 
-    def build_all_micromodels(self) -> None:
+    def build_micromodels(self) -> None:
         """
         Build all micromodels specified in self.configs.
         """
         for config in self.configs:
             if config.get("build", True):
-                self.build_micromodel_from_config(config)
+                self._build_micromodel(config)
 
-    def load_models(self, force_reload: bool = False) -> None:
+    def load_micromodels(self, force_reload: bool = False) -> None:
         """
         Load all models into cache.
         """
         for config in self.configs:
-            self._load_model(config, force_reload=force_reload)
+            self._load_micromodel(config, force_reload=force_reload)
 
-    def _load_model(
+    def _load_micromodel(
         self, config: Mapping[str, Any], force_reload: bool = False
     ):
         """
@@ -162,51 +169,58 @@ class Orchestrator:
         self.cache[model_name] = model
         return self.cache[model_name]
 
-    def infer_config(
-        self, query: str, config: Mapping[str, Any]
-    ) -> Mapping[str, Any]:
+    def run_micromodel(
+        self, micromodel_name: str, query: str
+    ) -> Any:
         """
         Run inference from the micromodel specified in a config.
 
+        :param micromodel_name: Name of the micromodel to run.
         :param query: string utterance to run inference on.
-        :param config: Micromodel configuration.
-        :return: Mapping of micromodel name to the inference result.
+        :return: Result of micromodel inference.
         """
-        self._verify_config(config)
-        model_name = get_model_name(config)
-        model = self.cache.get(model_name)
+        model = self.cache.get(micromodel_name)
         if not model:
-            model = self._load_model(config)
-        return {model_name: model.run(query, do_preprocess=True)}
+            mm_config = self._get_config_by_name(micromodel_name)
+            if mm_config is None:
+                raise ValueError("Invalid micromodel name %s" % micromodel_name)
+            model = self._load_micromodel(mm_config)
+        return model.run(query, do_preprocess=True)
 
-    def batch_infer_config(
-        self, queries: List[str], config: Mapping[str, Any]
-    ) -> Mapping[str, List[Any]]:
+    def run_micromodel_batch(
+        self, micromodel_name: str, queries: List[str]
+    ) -> List[Any]:
         """
         Run batch inference from the micromodel specified in config.
+
+        :param micromodel_name: Name of the micromodel to run.
         :param queries: List of string utterance to run inference on.
-        :param config: Micromodel configuration.
-        :return: Mapping of micromodel name to the inference result.
+        :return: List of inference results.
         """
         # TODO: Preprocessing
-        self._verify_config(config)
-        model_name = get_model_name(config)
-        model = self.cache.get(model_name)
+        model = self.cache.get(micromodel_name)
         if not model:
-            model = self._load_model(config)
-        return {model_name: model.batch_run(queries)}
+            mm_config = self._get_config_by_name(micromodel_name)
+            if mm_config is None:
+                raise ValueError("Invalid micromodel name %s" % micromodel_name)
+            model = self._load_micromodel(mm_config)
+        return model.batch_run(queries)
 
-    def infer(self, query: str) -> Mapping[str, Any]:
+    def run_micromodels(self, query: str) -> Mapping[str, Any]:
         """
-        Infer from all the models in self.configs
+        Run all the models in self.configs
 
         :param query: string utterance to run interence on.
         :return: Mapping of micromodel names to inference results.
         """
-        features = {}
+        results = {}
         for config in self.configs:
-            features.update(self.infer_config(query, config))
-        return features
+            self._verify_config(config)
+            micromodel_name = get_model_name(config)
+            results[micromodel_name] = self.run_micromodel(
+                micromodel_name, query
+            )
+        return results
 
     def flush_cache(self) -> None:
         """
