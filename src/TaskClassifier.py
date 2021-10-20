@@ -14,7 +14,7 @@ from src.aggregators.SimpleRatioAggregator import SimpleRatioAggregator
 from src.metrics import recall, precision, f1
 
 
-def _to_binary_vectors(
+def to_binary_vectors(
     mm_output: Mapping[int, List[int]], utterance_lengths: Mapping[int, int]
 ) -> List[np.ndarray]:
     """
@@ -135,7 +135,7 @@ class TaskClassifier:
 
             # mm_output is a list of binary vectors, represented as ndarrays
             # Convert to actual binary vectors.
-            mm_outputs = _to_binary_vectors(mm_output, utterance_lengths)
+            mm_outputs = to_binary_vectors(mm_output, utterance_lengths)
 
             feature_values = self.aggregator.aggregate(mm_outputs)
             if featurized is None:
@@ -230,6 +230,7 @@ class TaskClassifier:
         """
         micromodel_outputs = {}
         for idx, config in enumerate(self.orchestrator.configs):
+            self.orchestrator.flush_cache()
             micromodel_name = get_model_name(config)
             print(
                 "Running micromodel %s (%d/%d)."
@@ -350,15 +351,13 @@ class TaskClassifier:
 
     def test(
         self, test_data: List[Tuple[List[str], Any]]
-    ) -> Mapping[str, float]:
+    ) -> Mapping[str, Any]:
         """
         Run tests where test_data is in the form of
         [([sentence_1, sentence_2, ...], label), ...]
         See load_data() for more details.
 
         This method evaluates the following metrics:
-        * Precision
-        * Recall
         * F1 score
         * Accuracy
 
@@ -386,6 +385,36 @@ class TaskClassifier:
                 groundtruth,
             ),
         }
+
+    def test_featurized(self, featurized_data: np.ndarray, labels: List[str]) -> Mapping[str, Any]:
+        """
+        Test task-specific classifier using already featurized data.
+
+        :param featurized_data: ndarray of shape
+            (len(input_data), number of micromodels).
+        :param labels: list of labels.
+        :return: test results.
+        """
+        predictions = []
+        for row in featurized_data:
+            prediction, _ = self.infer_featurized([row])
+            predictions.append(prediction)
+
+        num_correct = 0
+        for idx, pred in enumerate(predictions):
+            if pred == labels[idx]:
+                num_correct += 1
+
+        accuracy = num_correct / len(labels)
+        return {
+            "accuracy": accuracy,
+            "f1": f1(
+                predictions,
+                labels,
+            ),
+        }
+
+
 
     def explain_global(self) -> None:
         """
