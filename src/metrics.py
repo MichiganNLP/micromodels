@@ -2,6 +2,8 @@
 Metrics for eval
 """
 
+from sklearn.metrics import f1_score
+
 
 def _stats(predictions, ground_truths, pos_val=1, neg_val=0):
     """
@@ -57,13 +59,16 @@ def precision(predictions, ground_truths, pos_val=1, neg_val=0):
     return top / bottom
 
 
-def f1(predictions, ground_truths, pos_val=1, neg_val=0):
+def f1(predictions, ground_truths):
     """
-    F1
+    F1 Score
     """
-    assert len(predictions) == len(ground_truths)
-    _precision = precision(predictions, ground_truths, pos_val, neg_val)
-    _recall = recall(predictions, ground_truths, pos_val, neg_val)
-    if _precision == 0 and _recall == 0:
-        return 0
-    return 2 * _precision * _recall / (_precision + _recall)
+    pos_f1 = f1_score(predictions, ground_truths, average="weighted")
+    micro_f1 = f1_score(predictions, ground_truths, average="micro")
+    macro_f1 = f1_score(predictions, ground_truths, average="macro")
+
+    return (
+        pos_f1,
+        micro_f1,
+        macro_f1,
+    )
