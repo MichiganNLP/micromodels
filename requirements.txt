@@ -68,7 +68,7 @@ multiprocess==0.70.12.2
 murmurhash==1.0.5
 nest-asyncio==1.5.1
 networkx==2.6.3
-nltk==3.6.2
+nltk>=3.6.5
 numba==0.54.0
 numpy==1.19.5
 oauthlib==3.1.1
