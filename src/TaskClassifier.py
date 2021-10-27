@@ -61,24 +61,6 @@ class TaskClassifier:
         self.aggregator = SimpleRatioAggregator()
         self._init_micromodels()
 
-    def load_data(
-        self, data_path: str = None, **kwargs
-    ) -> Tuple[List[Tuple[List[str], str]], List[Tuple[List[str], str]]]:
-        """
-        Load task-specific data.
-        This module assumes the following format for all of its data:
-
-        [([sentence_1, sentence_2, ...], label), ...]
-
-        Each instance of data is a tuple, where the first element
-        is a list of sentences, and the second element is the corresponding
-        label.
-
-        :param data_path: filepath to where the data is stored.
-        :return: tuple of train and test data.
-        """
-        raise NotImplementedError("load_data() not implemented!")
-
     def _init_micromodels(self) -> None:
         """
         Initialize all micromodels, by either loading them from file

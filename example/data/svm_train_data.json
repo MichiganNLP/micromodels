@@ -1,0 +1,17 @@
+{
+    "true": [
+        "This is a great movie",
+        "I really liked this movie",
+        "That was a fantastic movie.",
+        "Great plot",
+        "Very enjoyable movie",
+        "Great cast and great actors"
+    ],
+    "false": [
+        "That was a terrible movie",
+        "I did not enjoy that movie at all",
+        "Boring film.",
+        "Almost fell asleep for this movie",
+        "Poor acting"
+    ]
+}
