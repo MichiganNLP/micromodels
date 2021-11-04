@@ -89,10 +89,7 @@ class TestOrchestrator(unittest.TestCase):
         """
         Get names of micromodels according to self.configs
         """
-        return [
-            "%s_%s" % (config["name"], config["model_type"])
-            for config in self.configs
-        ]
+        return [config["name"] for config in self.configs]
 
     def test_build_micromodels(self):
         """
