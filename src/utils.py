@@ -6,11 +6,11 @@ import sys
 import string
 from time import time
 import numpy as np
-#import nltk
+import nltk
 from pathos.multiprocessing import ProcessPool as Pool
 
-#_POS_TAGGER = nltk.tag.perceptron.PerceptronTagger()
-#_WORDNET_LEMMA = nltk.stem.WordNetLemmatizer()
+_POS_TAGGER = nltk.tag.perceptron.PerceptronTagger()
+_WORDNET_LEMMA = nltk.stem.WordNetLemmatizer()
 
 
 def run_parallel_cpu(func, utterances):
@@ -74,18 +74,18 @@ def parallelize(func, utterances, num_procs=4):
     return idxs
 
 
-#def _pos_tagging(text):
-#    """
-#    tag POS
-#    """
-#    return _POS_TAGGER.tag(text)
+def _pos_tagging(text):
+    """
+    tag POS
+    """
+    return _POS_TAGGER.tag(text)
 
 
-#def lemmatize(token, pos):
-#    """
-#    lemmatize tokens
-#    """
-#    return _WORDNET_LEMMA.lemmatize(token, pos=pos)
+def lemmatize(token, pos):
+    """
+    lemmatize tokens
+    """
+    return _WORDNET_LEMMA.lemmatize(token, pos=pos)
 
 
 def preprocess_list(utterances):
@@ -114,22 +114,21 @@ def preprocess(query):
     query = query.lower()
     query = remove_punctuation(query)
 
-    #pos_tag = _pos_tagging(query.split())
-    #preprocessed = []
+    pos_tag = _pos_tagging(query.split())
+    preprocessed = []
 
-    #for word, tag in pos_tag:
-    #    if tag.startswith("NN"):
-    #        word = lemmatize(word, pos="n")
-    #    elif tag.startswith("VB"):
-    #        word = lemmatize(word, pos="v")
-    #    elif tag.startswith("JJ"):
-    #        word = lemmatize(word, pos="a")
-    #    elif tag.startswith("RB"):
-    #        word = lemmatize(word, pos="r")
+    for word, tag in pos_tag:
+        if tag.startswith("NN"):
+            word = lemmatize(word, pos="n")
+        elif tag.startswith("VB"):
+            word = lemmatize(word, pos="v")
+        elif tag.startswith("JJ"):
+            word = lemmatize(word, pos="a")
+        elif tag.startswith("RB"):
+            word = lemmatize(word, pos="r")
 
-    #    if word.isdigit():
-    #        word = "__DIG__" * len(word)
-    #    preprocessed.append(word)
+        if word.isdigit():
+            word = "__DIG__" * len(word)
+        preprocessed.append(word)
 
-    #return " ".join(preprocessed)
-    return query
+    return " ".join(preprocessed)

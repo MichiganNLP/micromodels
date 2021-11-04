@@ -1,13 +1,12 @@
 """
 FastText Micromodel.
 """
-from typing import Mapping, Any, List
+from typing import Mapping, List
 
-import pickle
 import random
 import json
 import tempfile
-import fasttext
+import fasttext as ft
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
 from src.micromodels.mm_utils import run_parallel
 from src.utils import preprocess_list, preprocess
@@ -105,9 +104,8 @@ class FastText(AbstractMicromodel):
                 for utterance in utterances:
                     file_p.write("__label__%s %s\n" % (label, utterance))
 
-        self.fasttext_model = fasttext.train_supervised(fp.name, epoch=20)
+        self.fasttext_model = ft.train_supervised(fp.name, epoch=20)
         fp.close()
-
 
     def save_model(self, model_path: str) -> None:
         """
@@ -126,7 +124,7 @@ class FastText(AbstractMicromodel):
 
         :param model_path: Filepath for loading Fasttext model.
         """
-        self.fasttext_model = fasttext.load_model(model_path)
+        self.fasttext_model = ft.load_model(model_path)
 
     def _run(self, query: str) -> bool:
         """
@@ -143,7 +141,7 @@ class FastText(AbstractMicromodel):
         if not prediction:
             breakpoint()
             return None
-        prediction = prediction[0][len("__label__"):]
+        prediction = prediction[0][len("__label__") :]
         return {"true": True, "false": False}[prediction]
 
     def _batch_run(self, query_groups: List[List[str]]) -> List[List[int]]:
