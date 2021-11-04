@@ -10,7 +10,7 @@ import tempfile
 import fasttext
 from src.micromodels.AbstractMicromodel import AbstractMicromodel
 from src.micromodels.mm_utils import run_parallel
-from src.utils import preprocess_list, preprocess 
+from src.utils import preprocess_list, preprocess
 
 random.seed(a=42)
 
