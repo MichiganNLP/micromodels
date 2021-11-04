@@ -6,6 +6,7 @@ interpret_core==0.2.7
 nltk==3.6.2
 numpy==1.19.5
 pathos==0.2.8
+pytest==6.2.5
 scikit_learn==1.0.1
 sentence_transformers==2.0.0
 spacy==3.1.2
