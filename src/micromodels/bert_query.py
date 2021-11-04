@@ -162,7 +162,7 @@ class BertQuery(AbstractMicromodel):
         :param threshold: (float) Threshold value for bert similarity score.
         :param seed: (List[str]) Seed for Bert-Query.
         :param device: (str) device to use for Transformer.
-            Optional, defaults to 'cuda:1'.
+            Optional, defaults to 'cpu'
 
         :param infer_config: (Mapping[str, Any]) Configurations specific to
             run_bert(). See run_bert() method for details.
@@ -183,7 +183,7 @@ class BertQuery(AbstractMicromodel):
         self.seed = kwargs["seed"]
         self.seed_encoding = None
         self.infer_config = kwargs.get("infer_config")
-        device = kwargs.get("device", "cuda:1")
+        device = kwargs.get("device", "cpu")
         if "bert_model" in kwargs:
             self.bert = kwargs["bert"]
 

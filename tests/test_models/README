@@ -1,0 +1,1 @@
+An empty directory where models generated during tests will be stored. The tests should delete all the models that were created as well.
