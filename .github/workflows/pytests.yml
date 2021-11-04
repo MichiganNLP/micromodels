@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+        MM_HOME: $GITHUB_WORKSPACE
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
