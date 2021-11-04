@@ -14,6 +14,7 @@ Install all required packages.
 
 .. code-block:: console
 
+ (venv) $ cd micromodels
  (venv) $ pip install -r requirements.txt
 
 Set the environment variable `MM_HOME` to point to the cloned repsotiry.
@@ -21,3 +22,10 @@ Set the environment variable `MM_HOME` to point to the cloned repsotiry.
 .. code-block:: console
 
  (venv) $ export MM_HOME=/home/username/micromodels
+
+To ensure that everything is installed correctly, run the included tests:
+
+.. code-block:: console
+
+ (venv) $ pytest
+
