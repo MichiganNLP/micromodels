@@ -2,6 +2,9 @@
 
 Micromodels -- A framework for accurate, explainable, data efficient, and reusable NLP models.
 
+[![pytest](https://github.com/MichiganNLP/micromodels/actions/workflows/pytests/badge.svg)](https://github.com/MichiganNLP/micromodels/actions/workflows/pytests.yml)
+[![arXiv](https://img.shields.io/badge/arXiv-2109.13770-b31b1b.svg)](https://arxiv.org/abs/2109.13770)
+
 A micromodel is a representation for a specific linguistic behavior.
 Analagous to how recent applications are built using *microservices*, in which each microservice has a specific responsibility, a micromodel is responsible for representing a specific linguistic behavior.
 By orchestrating a suite of micromodels, our framework allows researchers and developers to build explainable and reusable systems across multiple NLP tasks.
