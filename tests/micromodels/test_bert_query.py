@@ -77,7 +77,7 @@ class TestBertQuery(MicromodelUnittest):
         self.assertIsInstance(mm.seed, list)
         self.assertIsInstance(mm.seed_encoding, np.ndarray)
 
-        prediction = mm.run("That is a cat")
+        prediction = mm.run("This is a cat")
         self.assertEqual(prediction, True)
 
         predictions = mm.batch_run(
