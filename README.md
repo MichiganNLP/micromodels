@@ -25,6 +25,10 @@ This will be the default location for where micromodels are stored.
 
 `export MM_HOME=/home/username/micromodels`
 
+To ensure that everything is set up correctly, run pytest.
+
+`pytest`
+
 
 ### Documentation, Tutorial
 
