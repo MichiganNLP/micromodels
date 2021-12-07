@@ -45,7 +45,7 @@ If there are any features you would like to add, or have any suggestions on desi
 
 If you find our work helpful for your research, please cite our work:
 
-```
+```bibtex
 @inproceedings{lee-etal-2021-micromodels-efficient,
     title = "Micromodels for Efficient, Explainable, and Reusable Systems: A Case Study on Mental Health",
     author = "Lee, Andrew  and
