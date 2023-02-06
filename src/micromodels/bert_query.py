@@ -38,7 +38,7 @@ def _get_segments(
     return segments
 
 
-def _batch_similarity_search(
+def batch_similarity_search(
     bert: SentenceTransformer,
     seed_utterances: List[str],
     seed_encoding: np.ndarray,
@@ -320,6 +320,6 @@ class BertQuery(AbstractMicromodel):
             raise RuntimeError("Seed is not set!")
         if self.seed_encoding is None:
             raise RuntimeError("Seed encodings are not set!")
-        return _batch_similarity_search(
+        return batch_similarity_search(
             self.bert, self.seed, self.seed_encoding, queries, config=config
         )
