@@ -21,9 +21,9 @@ Once cloned, install all required packages using pip. We highly recommend using 
 `pip install -r requirements.txt`
 
 Set an environment variable `MM_HOME` to point to the location of the cloned repository.
-This will be the default location for where micromodels are stored. 
+This will be the default location for where micromodels are stored. Ex:
 
-`export MM_HOME=/home/username/micromodels`
+`export MM_HOME=/home/[username]/micromodels`
 
 To ensure that everything is set up correctly, run pytest.
 
